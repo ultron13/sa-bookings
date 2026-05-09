@@ -39,7 +39,7 @@ export class AdminService {
       averageRating: 4.2,
       revenueByMonth: monthlyRevenue,
       bookingsByStatus,
-      recentBookings: recentBookingsResult.data || [],
+      recentBookings: recentBookingsResult[0] || [],
       topProvinces: topProvinces.map((p) => ({ province: p.province, bookings: p.count })),
     };
   }

@@ -223,4 +223,41 @@ describe('BookingService', () => {
       expect(completed!.status).toBe(BookingStatus.COMPLETED);
     });
   });
+
+  describe('getHostBookings', () => {
+    it('should return bookings for a host', async () => {
+      await bookingService.create(validBooking);
+      const result = await bookingService.getHostBookings('host-123');
+      expect(result).toHaveProperty('data');
+      expect(result).toHaveProperty('total');
+      expect(Array.isArray(result.data)).toBe(true);
+    });
+
+    it('should accept custom page and pageSize params', async () => {
+      const result = await bookingService.getHostBookings('host-123', 1, 10);
+      expect(result).toHaveProperty('data');
+      expect(result).toHaveProperty('total');
+    });
+
+    it('should return empty for unknown host', async () => {
+      const result = await bookingService.getHostBookings('no-such-host-' + Date.now());
+      expect(Array.isArray(result.data)).toBe(true);
+    });
+  });
+
+  describe('cancel - completed booking', () => {
+    it('should throw error when booking status is completed', async () => {
+      const created = await bookingService.create(validBooking);
+      await bookingService.complete(created.id);
+      await expect(bookingService.cancel(created.id, 'user-123')).rejects.toThrow('Booking cannot be cancelled');
+    });
+  });
+
+  describe('cancel - without payment', () => {
+    it('should cancel booking with no payment info (no refund)', async () => {
+      const created = await bookingService.create(validBooking);
+      const cancelled = await bookingService.cancel(created.id, 'user-123', 'No payment yet');
+      expect(cancelled.status).toBe('cancelled');
+    });
+  });
 });
