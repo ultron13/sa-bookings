@@ -87,10 +87,10 @@ export const BookingDetailPage: React.FC = () => {
           <div className="border-t pt-4">
             <h3 className="font-semibold text-gray-900 mb-3">Price Breakdown</h3>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-gray-600">R {booking.pricePerNight.toLocaleString()} x {Math.ceil((new Date(booking.checkOut).getTime() - new Date(booking.checkIn).getTime()) / (1000 * 60 * 60 * 24))} nights</span><span>R {booking.subtotal.toLocaleString()}</span></div>
-              <div className="flex justify-between"><span className="text-gray-600">Cleaning fee</span><span>R {booking.cleaningFee.toLocaleString()}</span></div>
-              <div className="flex justify-between"><span className="text-gray-600">Service fee</span><span>R {booking.serviceFee.toLocaleString()}</span></div>
-              <div className="flex justify-between font-bold text-base border-t pt-2"><span>Total</span><span>R {booking.totalAmount.toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-gray-600">R {Number(booking.pricePerNight).toLocaleString()} x {Math.ceil((new Date(booking.checkOut).getTime() - new Date(booking.checkIn).getTime()) / (1000 * 60 * 60 * 24))} nights</span><span>R {Number(booking.subtotal).toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-gray-600">Cleaning fee</span><span>R {Number(booking.cleaningFee).toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-gray-600">Service fee</span><span>R {Number(booking.serviceFee).toLocaleString()}</span></div>
+              <div className="flex justify-between font-bold text-base border-t pt-2"><span>Total</span><span>R {Number(booking.totalAmount).toLocaleString()}</span></div>
             </div>
           </div>
 

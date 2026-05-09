@@ -74,8 +74,8 @@ export class BookingService {
     const nights = Math.ceil(
       (new Date(data.checkOut).getTime() - new Date(data.checkIn).getTime()) / (1000 * 60 * 60 * 24)
     );
-    const subtotal = accommodation.pricePerNight * nights;
-    const totalAmount = subtotal + accommodation.cleaningFee + accommodation.serviceFee;
+    const subtotal = Number(accommodation.pricePerNight) * nights;
+    const totalAmount = subtotal + Number(accommodation.cleaningFee) + Number(accommodation.serviceFee);
 
     const reference = this.generateReference();
 
@@ -122,9 +122,9 @@ export class BookingService {
 
     if (booking.payment?.status === 'succeeded') {
       if (hoursUntilCheckIn >= config.booking.cancellationWindowHours) {
-        refundAmount = booking.totalAmount;
+        refundAmount = Number(booking.totalAmount);
       } else {
-        refundAmount = booking.totalAmount * 0.5;
+        refundAmount = Number(booking.totalAmount) * 0.5;
       }
 
       if (refundAmount > 0) {

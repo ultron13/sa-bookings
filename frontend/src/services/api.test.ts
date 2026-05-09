@@ -1,3 +1,5 @@
+export {};
+
 const mockAxiosInstance: any = jest.fn().mockResolvedValue({ data: {} });
 mockAxiosInstance.post = jest.fn();
 mockAxiosInstance.get = jest.fn();
@@ -164,8 +166,8 @@ describe('ApiService', () => {
     const errorFn = mockAxiosInstance.interceptors.response.use.mock.calls[0][1];
     const axios = require('axios');
     axios.post.mockRejectedValue(new Error('invalid token'));
-    delete window.location;
-    window.location = { href: '' } as any;
+    Object.defineProperty(window, 'location', { value: { href: '' }, writable: true });
+
     const config = { url: '/bookings', headers: {} };
     const error = { response: { status: 401 }, config };
     await expect(errorFn(error)).rejects.toBe(error);

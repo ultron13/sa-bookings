@@ -78,8 +78,8 @@ export const AccommodationDetailPage: React.FC = () => {
   if (!accommodation) return <div className="text-center py-20 text-gray-500">Accommodation not found</div>;
 
   const nights = calculateNights();
-  const subtotal = accommodation.pricePerNight * nights;
-  const total = subtotal + accommodation.cleaningFee + accommodation.serviceFee;
+  const subtotal = Number(accommodation.pricePerNight) * nights;
+  const total = subtotal + Number(accommodation.cleaningFee) + Number(accommodation.serviceFee);
   const placeholders = Array.from({ length: 4 }, (_, i) => i);
 
   return (
@@ -97,13 +97,13 @@ export const AccommodationDetailPage: React.FC = () => {
           <div className="flex items-start justify-between mb-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="badge bg-sa-green text-white">{accommodation.type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
+                <span className="badge bg-sa-green text-white">{(accommodation.type || '').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}</span>
                 <span className="badge bg-blue-100 text-blue-700">{accommodation.province}</span>
               </div>
               <h1 className="text-3xl font-bold text-gray-900">{accommodation.name}</h1>
               <p className="text-gray-500 mt-1">{accommodation.city}, {accommodation.address}</p>
               <div className="flex items-center gap-4 mt-3 text-sm text-gray-600">
-                <span className="flex items-center gap-1">★ {accommodation.averageRating.toFixed(1)} ({accommodation.reviewCount} reviews)</span>
+                <span className="flex items-center gap-1">★ {Number(accommodation.averageRating).toFixed(1)} ({accommodation.reviewCount} reviews)</span>
                 <span>·</span>
                 <span>{accommodation.bedrooms} bedroom{accommodation.bedrooms > 1 ? 's' : ''}</span>
                 <span>·</span>
@@ -112,7 +112,7 @@ export const AccommodationDetailPage: React.FC = () => {
                 <span>Up to {accommodation.maxGuests} guests</span>
               </div>
             </div>
-            <p className="text-2xl font-bold text-gray-900">R {accommodation.pricePerNight.toLocaleString()} <span className="text-sm font-normal text-gray-500">/ night</span></p>
+            <p className="text-2xl font-bold text-gray-900">R {Number(accommodation.pricePerNight).toLocaleString()} <span className="text-sm font-normal text-gray-500">/ night</span></p>
           </div>
 
           <div className="border-t pt-6 mb-6">
@@ -123,7 +123,7 @@ export const AccommodationDetailPage: React.FC = () => {
           <div className="border-t pt-6 mb-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Amenities</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {accommodation.amenities.map((amenity: string) => (
+              {(accommodation.amenities || []).map((amenity: string) => (
                 <div key={amenity} className="flex items-center gap-2 text-sm text-gray-700">
                   <span className="w-2 h-2 bg-sa-green rounded-full" />
                   {amenity.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
@@ -189,7 +189,7 @@ export const AccommodationDetailPage: React.FC = () => {
 
         <div className="lg:col-span-1">
           <div className="sticky top-24 bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-            <p className="text-2xl font-bold text-gray-900 mb-1">R {accommodation.pricePerNight.toLocaleString()} <span className="text-sm font-normal text-gray-500">/ night</span></p>
+            <p className="text-2xl font-bold text-gray-900 mb-1">R {Number(accommodation.pricePerNight).toLocaleString()} <span className="text-sm font-normal text-gray-500">/ night</span></p>
             <form onSubmit={handleBooking} className="mt-4 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -216,9 +216,9 @@ export const AccommodationDetailPage: React.FC = () => {
 
               {nights > 0 && (
                 <div className="border-t pt-4 space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-gray-600">R {accommodation.pricePerNight.toLocaleString()} x {nights} nights</span><span>R {subtotal.toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-600">Cleaning fee</span><span>R {accommodation.cleaningFee.toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-600">Service fee</span><span>R {accommodation.serviceFee.toLocaleString()}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600">R {Number(accommodation.pricePerNight).toLocaleString()} x {nights} nights</span><span>R {subtotal.toLocaleString()}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600">Cleaning fee</span><span>R {Number(accommodation.cleaningFee).toLocaleString()}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600">Service fee</span><span>R {Number(accommodation.serviceFee).toLocaleString()}</span></div>
                   <div className="flex justify-between font-bold text-base border-t pt-2"><span>Total</span><span>R {total.toLocaleString()}</span></div>
                 </div>
               )}

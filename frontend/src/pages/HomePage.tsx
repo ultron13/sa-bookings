@@ -87,7 +87,7 @@ export const HomePage: React.FC = () => {
                       🏠
                     </div>
                     <div className="absolute top-3 left-3">
-                      <span className="badge bg-sa-green text-white">{acc.type.replace('_', ' ')}</span>
+                      <span className="badge bg-sa-green text-white">{(acc.type || '').replace('_', ' ')}</span>
                     </div>
                   </div>
                   <div className="p-4">
@@ -95,10 +95,10 @@ export const HomePage: React.FC = () => {
                     <h3 className="font-semibold text-gray-900 group-hover:text-sa-green transition-colors truncate">{acc.name}</h3>
                     <div className="flex items-center gap-2 mt-2">
                       <span className="text-yellow-500">★</span>
-                      <span className="text-sm font-medium">{acc.averageRating.toFixed(1)}</span>
+                      <span className="text-sm font-medium">{Number(acc.averageRating).toFixed(1)}</span>
                       <span className="text-xs text-gray-400">({acc.reviewCount} reviews)</span>
                     </div>
-                    <p className="mt-2 font-bold text-gray-900">R {acc.pricePerNight.toLocaleString()} <span className="font-normal text-sm text-gray-500">/ night</span></p>
+                    <p className="mt-2 font-bold text-gray-900">R {Number(acc.pricePerNight).toLocaleString()} <span className="font-normal text-sm text-gray-500">/ night</span></p>
                   </div>
                 </Link>
               ))}

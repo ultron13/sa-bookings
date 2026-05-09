@@ -2,13 +2,13 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
-let mockUpdateProfile = () => Promise.resolve();
-let mockChangePassword = () => Promise.resolve();
+let mockUpdateProfile: (...args: any) => Promise<any> = () => Promise.resolve();
+let mockChangePassword: (...args: any) => Promise<any> = () => Promise.resolve();
 
 jest.mock('../services/api', () => ({
   __esModule: true,
-  default: { updateProfile: (...args: any[]) => mockUpdateProfile(...args), changePassword: (...args: any[]) => mockChangePassword(...args) },
-  api: { updateProfile: (...args: any[]) => mockUpdateProfile(...args), changePassword: (...args: any[]) => mockChangePassword(...args) },
+  default: { updateProfile: (a: any) => mockUpdateProfile(a), changePassword: (a: any, b: any) => mockChangePassword(a, b) },
+  api: { updateProfile: (a: any) => mockUpdateProfile(a), changePassword: (a: any, b: any) => mockChangePassword(a, b) },
 }));
 
 jest.mock('../contexts/AuthContext', () => ({

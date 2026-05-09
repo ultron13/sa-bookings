@@ -122,10 +122,10 @@ export const SearchPage: React.FC = () => {
                   <div className="aspect-[4/3] bg-gradient-to-br from-gray-300 to-gray-400 relative flex items-center justify-center text-5xl text-gray-500">
                     🏠
                     <div className="absolute top-3 left-3">
-                      <span className="badge bg-sa-green text-white">{acc.type.replace('_', ' ')}</span>
+                      <span className="badge bg-sa-green text-white">{(acc.type || '').replace('_', ' ')}</span>
                     </div>
                     <div className="absolute top-3 right-3">
-                      <span className="badge bg-white text-gray-900 shadow">★ {acc.averageRating.toFixed(1)}</span>
+                      <span className="badge bg-white text-gray-900 shadow">★ {Number(acc.averageRating).toFixed(1)}</span>
                     </div>
                   </div>
                   <div className="p-4">
@@ -139,12 +139,12 @@ export const SearchPage: React.FC = () => {
                       <span>Up to {acc.maxGuests} guests</span>
                     </div>
                     <div className="flex items-center gap-1 mt-3">
-                      {acc.amenities.slice(0, 4).map((a: string) => (
-                        <span key={a} className="badge bg-gray-100 text-gray-600 text-[10px]">{a.replace(/_/g, ' ')}</span>              
+                      {(acc.amenities || []).slice(0, 4).map((a: string) => (
+                        <span key={a} className="badge bg-gray-100 text-gray-600 text-[10px]">{a.replace(/_/g, ' ')}</span>
                       ))}
-                      {acc.amenities.length > 4 && <span className="text-xs text-gray-400">+{acc.amenities.length - 4}</span>}
+                      {(acc.amenities || []).length > 4 && <span className="text-xs text-gray-400">+{(acc.amenities || []).length - 4}</span>}
                     </div>
-                    <p className="mt-3 font-bold text-gray-900">R {acc.pricePerNight.toLocaleString()} <span className="font-normal text-sm text-gray-500">/ night</span></p>
+                    <p className="mt-3 font-bold text-gray-900">R {Number(acc.pricePerNight).toLocaleString()} <span className="font-normal text-sm text-gray-500">/ night</span></p>
                   </div>
                 </Link>
               ))}

@@ -73,7 +73,7 @@ export const DashboardPage: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <span className={`badge ${statusColors[booking.status] || 'bg-gray-100 text-gray-800'}`}>{booking.status}</span>
-                  <p className="text-sm font-medium text-gray-900 mt-1">R {booking.totalAmount.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-gray-900 mt-1">R {Number(booking.totalAmount).toLocaleString()}</p>
                 </div>
               </Link>
             ))}

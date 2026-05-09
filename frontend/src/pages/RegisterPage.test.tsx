@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 
-let mockRegister: (data: any) => Promise<any>;
+let mockRegister: (...args: any) => Promise<any>;
 let mockNavigate: (path: string) => void;
 
 jest.mock('../contexts/AuthContext', () => ({
@@ -13,7 +13,7 @@ jest.mock('../contexts/AuthContext', () => ({
     isAuthenticated: false,
     isLoading: false,
     login: () => {},
-    register: (...args: any[]) => mockRegister(...args),
+    register: (a: any) => mockRegister(a),
     logout: () => {},
   }),
   AuthProvider: ({ children }: any) => <>{children}</>,
