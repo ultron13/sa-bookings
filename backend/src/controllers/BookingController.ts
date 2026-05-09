@@ -73,6 +73,17 @@ export class BookingController {
     }
   }
 
+  async getHostBookings(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const pageSize = parseInt(req.query.pageSize as string) || 20;
+      const result = await bookingService.getHostBookings(req.user!.userId, page, pageSize);
+      res.json({ success: true, data: result.data, meta: { total: result.total } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async cancel(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { reason } = req.body;

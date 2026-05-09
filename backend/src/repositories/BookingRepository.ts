@@ -34,6 +34,15 @@ export class BookingRepository {
     });
   }
 
+  async findAll(page: number = 1, pageSize: number = 20): Promise<[Booking[], number]> {
+    return this.repo.findAndCount({
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      order: { createdAt: 'DESC' },
+      relations: ['accommodation', 'user', 'payment'],
+    });
+  }
+
   async findByHost(hostId: string, page: number = 1, pageSize: number = 20): Promise<[Booking[], number]> {
     return this.repo.createQueryBuilder('booking')
       .leftJoinAndSelect('booking.accommodation', 'accommodation')

@@ -10,6 +10,10 @@ import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { BookingDetailPage } from './pages/BookingDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { HostListingsPage } from './pages/HostListingsPage';
+import { HostBookingsPage } from './pages/HostBookingsPage';
+import { ListingFormPage } from './pages/ListingFormPage';
+import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { UserRole } from './types';
 
 export const ProtectedRoute: React.FC<{ children: React.ReactNode; roles?: UserRole[] }> = ({ children, roles }) => {
@@ -32,6 +36,11 @@ export const AppRoutes: React.FC = () => {
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
         <Route path="/bookings/:id" element={<ProtectedRoute><BookingDetailPage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="/host/listings" element={<ProtectedRoute roles={[UserRole.HOST]}><HostListingsPage /></ProtectedRoute>} />
+        <Route path="/host/listings/new" element={<ProtectedRoute roles={[UserRole.HOST]}><ListingFormPage /></ProtectedRoute>} />
+        <Route path="/host/listings/:id/edit" element={<ProtectedRoute roles={[UserRole.HOST]}><ListingFormPage /></ProtectedRoute>} />
+        <Route path="/host/bookings" element={<ProtectedRoute roles={[UserRole.HOST]}><HostBookingsPage /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute roles={[UserRole.ADMIN]}><AdminDashboardPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

@@ -39,9 +39,8 @@ export class AdminController {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = parseInt(req.query.pageSize as string) || 20;
-
-      const accommodations = await (await import('../services/AccommodationService')).AccommodationService;
-      res.json({ success: true, data: [], meta: { total: 0 } });
+      const result = await bookingService.getAllBookings(page, pageSize);
+      res.json({ success: true, data: result.data, meta: { total: result.total } });
     } catch (error) {
       next(error);
     }

@@ -59,11 +59,12 @@ export const Header: React.FC = () => {
                     </div>
                     <Link to="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setShowDropdown(false)}>Dashboard</Link>
                     <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setShowDropdown(false)}>Profile</Link>
-                    {user?.role === UserRole.HOST && (
+                    {user?.role === UserRole.HOST && (<>
                       <Link to="/host/listings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setShowDropdown(false)}>My Listings</Link>
-                    )}
+                      <Link to="/host/bookings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setShowDropdown(false)}>Booking Requests</Link>
+                    </>)}
                     {user?.role === UserRole.ADMIN && (
-                      <Link to="/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setShowDropdown(false)}>Admin Panel</Link>
+                      <Link to="/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setShowDropdown(false)}>Admin Dashboard</Link>
                     )}
                     <div className="border-t border-gray-100">
                       <button onClick={() => { setShowDropdown(false); logout(); navigate('/'); }} className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg">

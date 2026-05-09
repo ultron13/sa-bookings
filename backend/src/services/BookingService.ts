@@ -35,6 +35,11 @@ export class BookingService {
     return { data, total };
   }
 
+  async getAllBookings(page: number = 1, pageSize: number = 20): Promise<{ data: Booking[]; total: number }> {
+    const [data, total] = await this.bookingRepo.findAll(page, pageSize);
+    return { data, total };
+  }
+
   async create(data: {
     userId: string;
     accommodationId: string;

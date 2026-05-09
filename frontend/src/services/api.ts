@@ -131,6 +131,27 @@ class ApiService {
     return this.client.put(`/bookings/${id}/cancel`, { reason });
   }
 
+  getHostBookings(page: number = 1) {
+    return this.client.get('/bookings/host', { params: { page } });
+  }
+
+  // Admin
+  getAdminDashboard() {
+    return this.client.get('/admin/dashboard');
+  }
+
+  getAdminUsers(page: number = 1) {
+    return this.client.get('/admin/users', { params: { page } });
+  }
+
+  toggleUserStatus(userId: string) {
+    return this.client.put(`/admin/users/${userId}/toggle-status`);
+  }
+
+  getAdminBookings(page: number = 1) {
+    return this.client.get('/admin/bookings', { params: { page } });
+  }
+
   // Payments
   createPaymentIntent(data: { bookingId: string; amount: number; currency?: string }) {
     return this.client.post('/payments/create-payment-intent', data);

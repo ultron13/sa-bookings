@@ -23,24 +23,24 @@ export class AdminService {
       this.bookingRepo.getRevenueStats(startOfYear, endOfYear),
       this.bookingRepo.getBookingCountsByStatus(),
       this.bookingRepo.getMonthlyRevenue(currentYear),
-      this.bookingRepo.findByUser('', 1, 10),
+      this.bookingRepo.findAll(1, 10),
       this.accommodationRepo.getProvinceCounts(),
     ]);
 
     const activeListings = await this.accommodationRepo.getProvinceCounts().then(
-      (counts) => counts.reduce((sum, c) => sum + c.count, 0)
+      (counts) => counts.reduce((sum, c) => sum + Number(c.count), 0)
     );
 
     return {
-      totalBookings: bookingsByStatus.reduce((sum, b) => sum + b.count, 0),
-      totalRevenue,
+      totalBookings: bookingsByStatus.reduce((sum, b) => sum + Number(b.count), 0),
+      totalRevenue: Number(totalRevenue),
       activeListings,
       occupancyRate: 65,
       averageRating: 4.2,
-      revenueByMonth: monthlyRevenue,
-      bookingsByStatus,
+      revenueByMonth: monthlyRevenue.map((m: any) => ({ ...m, revenue: Number(m.revenue) })),
+      bookingsByStatus: bookingsByStatus.map((b: any) => ({ ...b, count: Number(b.count) })),
       recentBookings: recentBookingsResult[0] || [],
-      topProvinces: topProvinces.map((p) => ({ province: p.province, bookings: p.count })),
+      topProvinces: topProvinces.map((p) => ({ province: p.province, bookings: Number(p.count) })),
     };
   }
 
