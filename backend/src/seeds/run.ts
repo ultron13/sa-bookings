@@ -1,0 +1,243 @@
+import bcrypt from 'bcryptjs';
+import { AppDataSource } from '../config/database';
+import { User } from '../entities/User';
+import { Accommodation } from '../entities/Accommodation';
+import { UserRole, AccommodationType, Province, Amenity } from '../types/enums';
+
+export async function runSeeds(): Promise<void> {
+  if (!AppDataSource.isInitialized) return;
+
+  const userRepo = AppDataSource.getRepository(User);
+  const accRepo = AppDataSource.getRepository(Accommodation);
+
+  const existingUsers = await userRepo.count();
+  if (existingUsers > 0) return;
+
+  const hashedPassword = await bcrypt.hash('Password123', 12);
+
+  const admin = await userRepo.save({
+    firstName: 'System',
+    lastName: 'Admin',
+    email: 'admin@sabookings.co.za',
+    password: hashedPassword,
+    role: UserRole.ADMIN,
+    phone: '+27110000000',
+  });
+
+  const hosts = await userRepo.save([
+    { firstName: 'Thabo', lastName: 'Mokwena', email: 'thabo@example.com', password: hashedPassword, role: UserRole.HOST, phone: '+27110000001' },
+    { firstName: 'Sarah', lastName: 'van der Merwe', email: 'sarah@example.com', password: hashedPassword, role: UserRole.HOST, phone: '+27110000002' },
+    { firstName: 'John', lastName: 'Botha', email: 'john@example.com', password: hashedPassword, role: UserRole.HOST, phone: '+27110000003' },
+    { firstName: 'Nomsa', lastName: 'Zulu', email: 'nomsa@example.com', password: hashedPassword, role: UserRole.HOST, phone: '+27110000004' },
+  ]);
+
+  const tourists = await userRepo.save([
+    { firstName: 'Alice', lastName: 'Johnson', email: 'alice@example.com', password: hashedPassword, role: UserRole.TOURIST, phone: '+27110000005' },
+    { firstName: 'Bob', lastName: 'Smith', email: 'bob@example.com', password: hashedPassword, role: UserRole.TOURIST, phone: '+27110000006' },
+  ]);
+
+  const accommodations = [
+    {
+      name: 'Table Mountain Lodge',
+      description: 'Luxurious lodge with breathtaking views of Table Mountain. Features world-class amenities, fine dining restaurant, and infinity pool.',
+      type: AccommodationType.LODGE,
+      province: Province.WESTERN_CAPE,
+      city: 'Cape Town',
+      address: '1 Lodge Road, Table Mountain National Park',
+      latitude: -33.9628,
+      longitude: 18.4108,
+      pricePerNight: 3500,
+      cleaningFee: 500,
+      serviceFee: 350,
+      maxGuests: 4,
+      bedrooms: 2,
+      beds: 3,
+      bathrooms: 2,
+      amenities: [Amenity.WIFI, Amenity.POOL, Amenity.PARKING, Amenity.RESTAURANT, Amenity.SEA_VIEW, Amenity.SPA, Amenity.BREAKFAST],
+      images: ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6', 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b'],
+      isFeatured: true,
+      hostId: hosts[0].id,
+      cancellationPolicy: { type: 'flexible', description: 'Free cancellation up to 48 hours before check-in', refundPercentage: 100 },
+      checkInTime: '14:00',
+      checkOutTime: '11:00',
+    },
+    {
+      name: 'Kruger Safari Camp',
+      description: 'Experience the wild in comfort at our premium safari camp bordering Kruger National Park. Game drives included.',
+      type: AccommodationType.GAME_LODGE,
+      province: Province.MPUMALANGA,
+      city: 'Nelspruit',
+      address: 'Sabi Sand Reserve, Kruger Region',
+      latitude: -24.9788,
+      longitude: 31.4847,
+      pricePerNight: 8500,
+      cleaningFee: 0,
+      serviceFee: 850,
+      maxGuests: 8,
+      bedrooms: 4,
+      beds: 8,
+      bathrooms: 4,
+      amenities: [Amenity.WIFI, Amenity.POOL, Amenity.PARKING, Amenity.RESTAURANT, Amenity.BAR, Amenity.SAFARI, Amenity.AIRPORT_SHUTTLE],
+      images: ['https://images.unsplash.com/photo-1547970810-dc1eac37d174', 'https://images.unsplash.com/photo-1496425745719-4c5c0a00f1f7'],
+      isFeatured: true,
+      hostId: hosts[0].id,
+      cancellationPolicy: { type: 'strict', description: '50% refund up to 7 days before check-in', refundPercentage: 50 },
+      checkInTime: '12:00',
+      checkOutTime: '10:00',
+    },
+    {
+      name: 'Durban Beachfront Apartment',
+      description: 'Modern apartment overlooking the Indian Ocean. Steps from uShaka Marine World and the Golden Mile.',
+      type: AccommodationType.APARTMENT,
+      province: Province.KWAZULU_NATAL,
+      city: 'Durban',
+      address: '45 Marine Parade, Durban Beachfront',
+      latitude: -29.8587,
+      longitude: 31.0258,
+      pricePerNight: 1800,
+      cleaningFee: 350,
+      serviceFee: 180,
+      maxGuests: 4,
+      bedrooms: 2,
+      beds: 2,
+      bathrooms: 1,
+      amenities: [Amenity.WIFI, Amenity.PARKING, Amenity.SEA_VIEW, Amenity.KITCHEN, Amenity.TV, Amenity.AIR_CONDITIONING],
+      images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2', 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267'],
+      isFeatured: true,
+      hostId: hosts[1].id,
+      cancellationPolicy: { type: 'moderate', description: 'Full refund up to 5 days before check-in', refundPercentage: 100 },
+      checkInTime: '15:00',
+      checkOutTime: '10:00',
+    },
+    {
+      name: 'Joburg City Penthouse',
+      description: 'Stunning penthouse in Sandton with panoramic city views. Access to gym, pool, and concierge services.',
+      type: AccommodationType.APARTMENT,
+      province: Province.GAUTENG,
+      city: 'Johannesburg',
+      address: '88 Maude Street, Sandton',
+      latitude: -26.1076,
+      longitude: 28.0567,
+      pricePerNight: 4200,
+      cleaningFee: 600,
+      serviceFee: 420,
+      maxGuests: 6,
+      bedrooms: 3,
+      beds: 3,
+      bathrooms: 2,
+      amenities: [Amenity.WIFI, Amenity.POOL, Amenity.PARKING, Amenity.GYM, Amenity.AIR_CONDITIONING, Amenity.TV, Amenity.LAUNDRY],
+      images: ['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688', 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2'],
+      isFeatured: true,
+      hostId: hosts[1].id,
+      cancellationPolicy: { type: 'moderate', description: 'Full refund up to 3 days before check-in', refundPercentage: 100 },
+      checkInTime: '14:00',
+      checkOutTime: '11:00',
+    },
+    {
+      name: 'Winelands Guesthouse',
+      description: 'Charming guesthouse in Stellenbosch wine country. Vineyard views, wine tasting, and gourmet breakfast.',
+      type: AccommodationType.GUESTHOUSE,
+      province: Province.WESTERN_CAPE,
+      city: 'Stellenbosch',
+      address: '15 Winery Road, Stellenbosch',
+      latitude: -33.9374,
+      longitude: 18.8601,
+      pricePerNight: 2800,
+      cleaningFee: 400,
+      serviceFee: 280,
+      maxGuests: 2,
+      bedrooms: 1,
+      beds: 1,
+      bathrooms: 1,
+      amenities: [Amenity.WIFI, Amenity.POOL, Amenity.PARKING, Amenity.BREAKFAST, Amenity.WINE_TASTING, Amenity.MOUNTAIN_VIEW],
+      images: ['https://images.unsplash.com/photo-1540541338287-41700207dee6', 'https://images.unsplash.com/photo-1566073771259-6a8506099945'],
+      isFeatured: false,
+      hostId: hosts[2].id,
+      cancellationPolicy: { type: 'flexible', description: 'Free cancellation up to 48 hours before check-in', refundPercentage: 100 },
+      checkInTime: '14:00',
+      checkOutTime: '11:00',
+    },
+    {
+      name: 'Drakensberg Mountain Retreat',
+      description: 'Cozy cottage nestled in the Drakensberg mountains. Perfect for hiking, fly fishing, and stargazing.',
+      type: AccommodationType.COTTAGE,
+      province: Province.KWAZULU_NATAL,
+      city: 'Bergville',
+      address: 'Drakensberg Gardens, Central Drakensberg',
+      latitude: -28.8011,
+      longitude: 29.4642,
+      pricePerNight: 1500,
+      cleaningFee: 300,
+      serviceFee: 150,
+      maxGuests: 6,
+      bedrooms: 3,
+      beds: 5,
+      bathrooms: 2,
+      amenities: [Amenity.FIREPLACE, Amenity.KITCHEN, Amenity.PARKING, Amenity.MOUNTAIN_VIEW, Amenity.PET_FRIENDLY],
+      images: ['https://images.unsplash.com/photo-1518780664697-55e3ad937233', 'https://images.unsplash.com/photo-1510798831971-99eb4f1d2e19'],
+      isFeatured: false,
+      hostId: hosts[2].id,
+      cancellationPolicy: { type: 'flexible', description: 'Free cancellation up to 24 hours before check-in', refundPercentage: 100 },
+      checkInTime: '13:00',
+      checkOutTime: '10:00',
+    },
+    {
+      name: 'Sun City Resort Villa',
+      description: 'Premium villa at Sun City Resort with access to golf courses, casinos, and the Valley of Waves.',
+      type: AccommodationType.VILLA,
+      province: Province.NORTH_WEST,
+      city: 'Sun City',
+      address: 'Sun City Resort, Pilanesberg',
+      latitude: -25.3425,
+      longitude: 27.0947,
+      pricePerNight: 6500,
+      cleaningFee: 800,
+      serviceFee: 650,
+      maxGuests: 8,
+      bedrooms: 4,
+      beds: 6,
+      bathrooms: 3,
+      amenities: [Amenity.WIFI, Amenity.POOL, Amenity.PARKING, Amenity.RESTAURANT, Amenity.BAR, Amenity.SPA, Amenity.GYM, Amenity.AIRPORT_SHUTTLE],
+      images: ['https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9', 'https://images.unsplash.com/photo-1582719508461-905c673771fd'],
+      isFeatured: false,
+      hostId: hosts[3].id,
+      cancellationPolicy: { type: 'strict', description: '50% refund up to 14 days before check-in', refundPercentage: 50 },
+      checkInTime: '15:00',
+      checkOutTime: '10:00',
+    },
+    {
+      name: 'Garden Route B&B',
+      description: 'Beautiful bed and breakfast along the Garden Route. Close to beaches, forests, and lagoons.',
+      type: AccommodationType.BNB,
+      province: Province.WESTERN_CAPE,
+      city: 'Knysna',
+      address: '22 The Heads Road, Knysna',
+      latitude: -34.0357,
+      longitude: 23.0486,
+      pricePerNight: 1200,
+      cleaningFee: 200,
+      serviceFee: 120,
+      maxGuests: 2,
+      bedrooms: 1,
+      beds: 1,
+      bathrooms: 1,
+      amenities: [Amenity.WIFI, Amenity.PARKING, Amenity.BREAKFAST, Amenity.SEA_VIEW, Amenity.LAUNDRY],
+      images: ['https://images.unsplash.com/photo-1566195992011-5f6b21e539db', 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914'],
+      isFeatured: false,
+      hostId: hosts[3].id,
+      cancellationPolicy: { type: 'flexible', description: 'Free cancellation up to 24 hours before check-in', refundPercentage: 100 },
+      checkInTime: '14:00',
+      checkOutTime: '10:30',
+    },
+  ];
+
+  await accRepo.save(accommodations);
+  console.log('Seed data created successfully');
+}
+
+if (require.main === module) {
+  AppDataSource.initialize().then(async () => {
+    await runSeeds();
+    await AppDataSource.destroy();
+  });
+}

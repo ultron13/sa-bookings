@@ -1,0 +1,162 @@
+import axios, { AxiosInstance, AxiosError } from 'axios';
+
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
+
+class ApiService {
+  private client: AxiosInstance;
+
+  constructor() {
+    this.client = axios.create({
+      baseURL: API_BASE,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      timeout: 30000,
+    });
+
+    this.client.interceptors.request.use((config) => {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    });
+
+    this.client.interceptors.response.use(
+      (response) => response,
+      async (error: AxiosError) => {
+        if (error.response?.status === 401) {
+          const refreshToken = localStorage.getItem('refreshToken');
+          if (refreshToken && !error.config?.url?.includes('/auth/')) {
+            try {
+              const { data } = await axios.post(`${API_BASE}/auth/refresh-token`, { refreshToken });
+              localStorage.setItem('accessToken', data.data.accessToken);
+              localStorage.setItem('refreshToken', data.data.refreshToken);
+              if (error.config) {
+                error.config.headers.Authorization = `Bearer ${data.data.accessToken}`;
+                return this.client(error.config);
+              }
+            } catch {
+              localStorage.removeItem('accessToken');
+              localStorage.removeItem('refreshToken');
+              window.location.href = '/login';
+            }
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+  }
+
+  // Auth
+  register(data: { firstName: string; lastName: string; email: string; password: string; phone?: string; role?: string }) {
+    return this.client.post('/auth/register', data);
+  }
+
+  login(email: string, password: string) {
+    return this.client.post('/auth/login', { email, password });
+  }
+
+  refreshToken(refreshToken: string) {
+    return this.client.post('/auth/refresh-token', { refreshToken });
+  }
+
+  logout() {
+    return this.client.post('/auth/logout');
+  }
+
+  getProfile() {
+    return this.client.get('/auth/profile');
+  }
+
+  updateProfile(data: Partial<any>) {
+    return this.client.put('/auth/profile', data);
+  }
+
+  changePassword(currentPassword: string, newPassword: string) {
+    return this.client.put('/auth/change-password', { currentPassword, newPassword });
+  }
+
+  // Accommodations
+  searchAccommodations(params: Record<string, any>) {
+    return this.client.get('/accommodations/search', { params });
+  }
+
+  getAccommodation(id: string) {
+    return this.client.get(`/accommodations/${id}`);
+  }
+
+  getFeatured() {
+    return this.client.get('/accommodations/featured');
+  }
+
+  getProvinceCounts() {
+    return this.client.get('/accommodations/province-counts');
+  }
+
+  createAccommodation(data: Partial<any>) {
+    return this.client.post('/accommodations', data);
+  }
+
+  updateAccommodation(id: string, data: Partial<any>) {
+    return this.client.put(`/accommodations/${id}`, data);
+  }
+
+  deleteAccommodation(id: string) {
+    return this.client.delete(`/accommodations/${id}`);
+  }
+
+  getMyListings() {
+    return this.client.get('/accommodations');
+  }
+
+  // Bookings
+  createBooking(data: { accommodationId: string; checkIn: string; checkOut: string; guests: number; specialRequests?: string }) {
+    return this.client.post('/bookings', data);
+  }
+
+  getMyBookings(page: number = 1) {
+    return this.client.get('/bookings', { params: { page } });
+  }
+
+  getBooking(id: string) {
+    return this.client.get(`/bookings/${id}`);
+  }
+
+  getBookingByReference(reference: string) {
+    return this.client.get(`/bookings/reference/${reference}`);
+  }
+
+  cancelBooking(id: string, reason?: string) {
+    return this.client.put(`/bookings/${id}/cancel`, { reason });
+  }
+
+  // Payments
+  createPaymentIntent(data: { bookingId: string; amount: number; currency?: string }) {
+    return this.client.post('/payments/create-payment-intent', data);
+  }
+
+  // Reviews
+  getAccommodationReviews(accommodationId: string, page: number = 1) {
+    return this.client.get(`/reviews/accommodation/${accommodationId}`, { params: { page } });
+  }
+
+  createReview(data: { accommodationId: string; rating: number; comment: string }) {
+    return this.client.post('/reviews', data);
+  }
+
+  updateReview(id: string, data: Partial<{ rating: number; comment: string }>) {
+    return this.client.put(`/reviews/${id}`, data);
+  }
+
+  deleteReview(id: string) {
+    return this.client.delete(`/reviews/${id}`);
+  }
+
+  respondToReview(id: string, response: string) {
+    return this.client.put(`/reviews/${id}/respond`, { response });
+  }
+}
+
+export const api = new ApiService();
+export default api;

@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sa-bookings-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.sabookings.co.za
+        - www.sabookings.co.za
+      secretName: sa-bookings-tls
+  rules:
+    - host: api.sabookings.co.za
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sa-bookings-backend
+                port:
+                  number: 4000
+    - host: www.sabookings.co.za
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sa-bookings-frontend
+                port:
+                  number: 3000
