@@ -117,7 +117,7 @@ export class BookingService {
       throw new Error('Booking cannot be cancelled');
     }
 
-    const hoursUntilCheckIn = (booking.checkIn.getTime() - Date.now()) / (1000 * 60 * 60);
+    const hoursUntilCheckIn = (new Date(booking.checkIn).getTime() - Date.now()) / (1000 * 60 * 60);
     let refundAmount = 0;
 
     if (booking.payment?.status === 'succeeded') {

@@ -231,7 +231,7 @@ export async function runSeeds(): Promise<void> {
     },
   ];
 
-  await accRepo.save(accommodations);
+  await accRepo.save(accommodations as any);
   console.log('Seed data created successfully');
 }
 

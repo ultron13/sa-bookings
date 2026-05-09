@@ -85,8 +85,8 @@ export class BookingRepository {
     await this.repo.update(id, {
       status: BookingStatus.CANCELLED,
       cancelledAt: new Date(),
-      cancellationReason: reason || null,
-      refundAmount: refundAmount || null,
+      cancellationReason: reason || undefined,
+      refundAmount: refundAmount || undefined,
     });
     return this.findById(id);
   }

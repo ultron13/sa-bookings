@@ -56,8 +56,8 @@ export class AccommodationRepository {
       });
     }
 
-    if (params.minRating) {
-      query.andWhere('acc.averageRating >= :minRating', { minRating: params.minRating });
+    if (params.rating) {
+      query.andWhere('acc.averageRating >= :minRating', { minRating: params.rating });
     }
 
     const sortBy = params.sortBy || 'createdAt';
