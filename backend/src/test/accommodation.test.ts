@@ -1,6 +1,5 @@
 import { AccommodationService } from '../services/AccommodationService';
 
-// Shared mutable store so tests can reset state
 const store: { accommodations: Record<string, any> } = { accommodations: {} };
 
 jest.mock('../repositories/AccommodationRepository', () => ({
@@ -33,7 +32,10 @@ jest.mock('../repositories/AccommodationRepository', () => ({
     softDelete: jest.fn().mockImplementation(async (id: string) => {
       if (store.accommodations[id]) store.accommodations[id].isActive = false;
     }),
-    getFeatured: jest.fn().mockResolvedValue([]),
+    getFeatured: jest.fn().mockResolvedValue([
+      { id: 'featured-1', name: 'Featured Lodge', isFeatured: true },
+      { id: 'featured-2', name: 'Featured Villa', isFeatured: true },
+    ]),
     getProvinceCounts: jest.fn().mockResolvedValue([
       { province: 'Western Cape', count: 5 },
       { province: 'Gauteng', count: 3 },
@@ -103,6 +105,20 @@ describe('AccommodationService', () => {
     });
   });
 
+  describe('getByIdPublic', () => {
+    it('should return public accommodation data', async () => {
+      const created = await accommodationService.create(sampleAccommodation);
+      const found = await accommodationService.getByIdPublic(created.id);
+      expect(found).not.toBeNull();
+      expect(found!.id).toBe(created.id);
+    });
+
+    it('should return null for non-existent public accommodation', async () => {
+      const result = await accommodationService.getByIdPublic('non-existent');
+      expect(result).toBeNull();
+    });
+  });
+
   describe('search', () => {
     it('should return paginated results', async () => {
       await accommodationService.create(sampleAccommodation);
@@ -150,6 +166,12 @@ describe('AccommodationService', () => {
         accommodationService.update(created.id, 'other-host', { pricePerNight: 3000 })
       ).rejects.toThrow('Unauthorized');
     });
+
+    it('should throw error for non-existent accommodation', async () => {
+      await expect(
+        accommodationService.update('non-existent', 'host-123', { pricePerNight: 3000 })
+      ).rejects.toThrow('Accommodation not found');
+    });
   });
 
   describe('delete', () => {
@@ -163,6 +185,20 @@ describe('AccommodationService', () => {
       await expect(
         accommodationService.delete(created.id, 'other-host')
       ).rejects.toThrow('Unauthorized');
+    });
+
+    it('should throw error for non-existent accommodation', async () => {
+      await expect(
+        accommodationService.delete('non-existent', 'host-123')
+      ).rejects.toThrow('Accommodation not found');
+    });
+  });
+
+  describe('getFeatured', () => {
+    it('should return featured accommodations', async () => {
+      const featured = await accommodationService.getFeatured();
+      expect(featured).toHaveLength(2);
+      expect(featured[0]).toHaveProperty('isFeatured', true);
     });
   });
 

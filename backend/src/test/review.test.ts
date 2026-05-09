@@ -1,18 +1,19 @@
 import { ReviewService } from '../services/ReviewService';
 
-// Use module-level shared storage so we can reset between tests
 let reviewStore: Record<string, any> = {};
 
 jest.mock('../repositories/ReviewRepository', () => ({
   ReviewRepository: jest.fn().mockImplementation(() => ({
     findById: jest.fn().mockImplementation(async (id: string) => reviewStore[id] || null),
-    findByAccommodation: jest.fn().mockImplementation(async (accId: string) => {
+    findByAccommodation: jest.fn().mockImplementation(async (accId: string, page: number = 1, pageSize: number = 20) => {
       const accReviews = Object.values(reviewStore).filter((r: any) => r.accommodationId === accId);
-      return [accReviews, accReviews.length];
+      const paginated = accReviews.slice((page - 1) * pageSize, page * pageSize);
+      return [paginated, accReviews.length];
     }),
-    findByUser: jest.fn().mockImplementation(async (userId: string) => {
+    findByUser: jest.fn().mockImplementation(async (userId: string, page: number = 1, pageSize: number = 20) => {
       const userReviews = Object.values(reviewStore).filter((r: any) => r.userId === userId);
-      return [userReviews, userReviews.length];
+      const paginated = userReviews.slice((page - 1) * pageSize, page * pageSize);
+      return [paginated, userReviews.length];
     }),
     findExisting: jest.fn().mockImplementation(async (userId: string, accId: string) => {
       return Object.values(reviewStore).find((r: any) => r.userId === userId && r.accommodationId === accId) || null;
@@ -60,9 +61,15 @@ jest.mock('../repositories/BookingRepository', () => ({
 describe('ReviewService', () => {
   let reviewService: ReviewService;
 
+  function clearReviewStore() {
+    for (const key of Object.keys(reviewStore)) {
+      delete reviewStore[key];
+    }
+  }
+
   beforeEach(() => {
     reviewService = new ReviewService();
-    reviewStore = {};
+    clearReviewStore();
     jest.clearAllMocks();
   });
 
@@ -75,7 +82,6 @@ describe('ReviewService', () => {
 
     it('should create a review with valid data', async () => {
       const review = await reviewService.create(validReview);
-
       expect(review).toHaveProperty('id');
       expect(review.rating).toBe(5);
       expect(review.comment).toBe('Amazing place!');
@@ -100,6 +106,13 @@ describe('ReviewService', () => {
         reviewService.create({ ...validReview, comment: 'Second review' })
       ).rejects.toThrow('You have already reviewed this accommodation');
     });
+
+    it('should create unverified review for user without completed stay', async () => {
+      const review = await reviewService.create({
+        userId: 'user-no-stay', accommodationId: 'acc-123', rating: 4, comment: 'Nice',
+      });
+      expect(review.isVerified).toBe(false);
+    });
   });
 
   describe('getByAccommodation', () => {
@@ -109,6 +122,27 @@ describe('ReviewService', () => {
       expect(result.data).toHaveLength(1);
       expect(result.data[0].comment).toBe('Great!');
     });
+
+    it('should return empty array for accommodation with no reviews', async () => {
+      const result = await reviewService.getByAccommodation('acc-none');
+      expect(result.data).toHaveLength(0);
+    });
+  });
+
+  describe('getByUser', () => {
+    it('should return reviews by a user', async () => {
+      const uid = 'user-reviews-' + Date.now() + Math.random();
+      const r1 = await reviewService.create({ userId: uid, accommodationId: 'acc-123', rating: 5, comment: 'Great!' });
+      expect(r1).toHaveProperty('id');
+      const result = await reviewService.getByUser(uid);
+      expect(result.data.length).toBeGreaterThanOrEqual(1);
+      expect(result.total).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should return empty array for user with no reviews', async () => {
+      const result = await reviewService.getByUser('user-no-reviews-' + Date.now() + Math.random());
+      expect(result.data).toHaveLength(0);
+    });
   });
 
   describe('update', () => {
@@ -116,11 +150,7 @@ describe('ReviewService', () => {
       const created = await reviewService.create({
         userId: 'user-with-stay', accommodationId: 'acc-123', rating: 3, comment: 'Okay',
       });
-
-      const updated = await reviewService.update(created.id, 'user-with-stay', {
-        rating: 4, comment: 'Actually pretty good!',
-      });
-
+      const updated = await reviewService.update(created.id, 'user-with-stay', { rating: 4, comment: 'Actually pretty good!' });
       expect(updated!.rating).toBe(4);
       expect(updated!.comment).toBe('Actually pretty good!');
     });
@@ -129,7 +159,6 @@ describe('ReviewService', () => {
       const created = await reviewService.create({
         userId: 'user-with-stay', accommodationId: 'acc-123', rating: 4, comment: 'Good',
       });
-
       await expect(
         reviewService.update(created.id, 'other-user', { rating: 2 })
       ).rejects.toThrow('Unauthorized');
@@ -141,7 +170,6 @@ describe('ReviewService', () => {
       const created = await reviewService.create({
         userId: 'user-with-stay', accommodationId: 'acc-123', rating: 3, comment: 'Meh',
       });
-
       await expect(
         reviewService.delete(created.id, 'user-with-stay')
       ).resolves.not.toThrow();
@@ -151,7 +179,6 @@ describe('ReviewService', () => {
       const created = await reviewService.create({
         userId: 'user-with-stay', accommodationId: 'acc-123', rating: 5, comment: 'Awesome',
       });
-
       await expect(
         reviewService.delete(created.id, 'other-user')
       ).rejects.toThrow('Unauthorized');
@@ -163,7 +190,6 @@ describe('ReviewService', () => {
       const created = await reviewService.create({
         userId: 'user-with-stay', accommodationId: 'acc-123', rating: 4, comment: 'Nice stay',
       });
-
       const responded = await reviewService.respondToReview(created.id, 'host-123', 'Thank you!');
       expect(responded!.responseFromHost).toBe('Thank you!');
     });
@@ -172,10 +198,15 @@ describe('ReviewService', () => {
       const created = await reviewService.create({
         userId: 'user-with-stay', accommodationId: 'acc-123', rating: 5, comment: 'Perfect',
       });
-
       await expect(
         reviewService.respondToReview(created.id, 'wrong-host', 'Thanks')
       ).rejects.toThrow('Unauthorized');
+    });
+
+    it('should throw error for non-existent review', async () => {
+      await expect(
+        reviewService.respondToReview('non-existent', 'host-123', 'Thanks')
+      ).rejects.toThrow('Review not found');
     });
   });
 });

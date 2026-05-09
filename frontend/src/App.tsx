@@ -12,7 +12,7 @@ import { BookingDetailPage } from './pages/BookingDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { UserRole } from './types';
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode; roles?: UserRole[] }> = ({ children, roles }) => {
+export const ProtectedRoute: React.FC<{ children: React.ReactNode; roles?: UserRole[] }> = ({ children, roles }) => {
   const { isAuthenticated, user, isLoading } = useAuth();
   if (isLoading) return <div className="text-center py-20"><div className="animate-spin w-8 h-8 border-4 border-sa-green border-t-transparent rounded-full mx-auto" /></div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -20,7 +20,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; roles?: UserRole[] }
   return <>{children}</>;
 };
 
-const AppRoutes: React.FC = () => {
+export const AppRoutes: React.FC = () => {
   return (
     <Routes>
       <Route element={<MainLayout />}>

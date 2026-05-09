@@ -1,0 +1,31 @@
+const mockApi = {
+  getProfile: jest.fn().mockRejectedValue(new Error('No token')),
+  login: jest.fn().mockResolvedValue({ data: { data: { accessToken: 't1', refreshToken: 't2', user: { id: '1', email: 'a@b.com', role: 'tourist' } } } }),
+  register: jest.fn().mockResolvedValue({ data: { data: { accessToken: 't1', refreshToken: 't2', user: { id: '1', email: 'a@b.com', role: 'tourist' } } } }),
+  logout: jest.fn().mockResolvedValue({}),
+  getFeatured: jest.fn().mockResolvedValue({ data: { data: [] } }),
+  getProvinceCounts: jest.fn().mockResolvedValue({ data: { data: [] } }),
+  searchAccommodations: jest.fn().mockResolvedValue({ data: { data: [], meta: {} } }),
+  getAccommodation: jest.fn().mockResolvedValue({ data: { data: {} } }),
+  createBooking: jest.fn().mockResolvedValue({ data: { data: {} } }),
+  getMyBookings: jest.fn().mockResolvedValue({ data: { data: [], meta: {} } }),
+  getBooking: jest.fn().mockResolvedValue({ data: { data: {} } }),
+  cancelBooking: jest.fn().mockResolvedValue({ data: {} }),
+  createPaymentIntent: jest.fn().mockResolvedValue({ data: { data: {} } }),
+  getAccommodationReviews: jest.fn().mockResolvedValue({ data: { data: [], meta: {} } }),
+  createReview: jest.fn().mockResolvedValue({ data: { data: {} } }),
+  updateProfile: jest.fn().mockResolvedValue({ data: { data: {} } }),
+  changePassword: jest.fn().mockResolvedValue({ data: {} }),
+  refreshToken: jest.fn().mockResolvedValue({ data: { data: { accessToken: 't1', refreshToken: 't2' } } }),
+  updateReview: jest.fn().mockResolvedValue({ data: { data: {} } }),
+  deleteReview: jest.fn().mockResolvedValue({ data: {} }),
+  respondToReview: jest.fn().mockResolvedValue({ data: { data: {} } }),
+  createAccommodation: jest.fn().mockResolvedValue({ data: { data: {} } }),
+  updateAccommodation: jest.fn().mockResolvedValue({ data: { data: {} } }),
+  deleteAccommodation: jest.fn().mockResolvedValue({ data: {} }),
+  getMyListings: jest.fn().mockResolvedValue({ data: { data: [] } }),
+  getBookingByReference: jest.fn().mockResolvedValue({ data: { data: {} } }),
+};
+
+export default mockApi;
+export const api = mockApi;

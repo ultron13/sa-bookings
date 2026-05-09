@@ -1,6 +1,5 @@
 import { AuthService } from '../services/AuthService';
 
-// Shared mock implementations that all UserRepository instances will use
 const mockFindByEmail = jest.fn();
 const mockFindByEmailWithPassword = jest.fn();
 const mockFindById = jest.fn();
@@ -39,20 +38,13 @@ describe('AuthService', () => {
     it('should register a new user and return tokens', async () => {
       mockFindByEmail.mockResolvedValue(null);
       mockCreate.mockImplementation(async (data: any) => ({
-        id: 'new-user-1',
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        role: 'tourist',
-        isActive: true,
+        id: 'new-user-1', firstName: data.firstName, lastName: data.lastName,
+        email: data.email, role: 'tourist', isActive: true,
       }));
       mockUpdate.mockResolvedValue(undefined);
 
       const result = await authService.register({
-        firstName: 'Jane',
-        lastName: 'Doe',
-        email: 'jane@example.com',
-        password: 'SecurePass123',
+        firstName: 'Jane', lastName: 'Doe', email: 'jane@example.com', password: 'SecurePass123',
       });
 
       expect(result).toHaveProperty('accessToken');
@@ -66,13 +58,22 @@ describe('AuthService', () => {
       mockFindByEmail.mockResolvedValue({ id: 'existing', email: 'dup@example.com' });
 
       await expect(
-        authService.register({
-          firstName: 'Dup',
-          lastName: 'User',
-          email: 'dup@example.com',
-          password: 'SecurePass123',
-        })
+        authService.register({ firstName: 'Dup', lastName: 'User', email: 'dup@example.com', password: 'SecurePass123' })
       ).rejects.toThrow('Email already registered');
+    });
+
+    it('should register with host role', async () => {
+      mockFindByEmail.mockResolvedValue(null);
+      mockCreate.mockImplementation(async (data: any) => ({
+        id: 'host-user', firstName: data.firstName, lastName: data.lastName,
+        email: data.email, role: 'host', isActive: true,
+      }));
+      mockUpdate.mockResolvedValue(undefined);
+
+      const result = await authService.register({
+        firstName: 'Host', lastName: 'User', email: 'host@example.com', password: 'SecurePass123', role: 'host' as any,
+      });
+      expect(result.user.role).toBe('host');
     });
   });
 
@@ -82,15 +83,8 @@ describe('AuthService', () => {
       const hashedPassword = await bcrypt.hash('SecurePass123', 12);
 
       mockFindByEmailWithPassword.mockResolvedValue({
-        id: 'login-user',
-        firstName: 'Login',
-        lastName: 'User',
-        email: 'login@example.com',
-        password: hashedPassword,
-        role: 'tourist',
-        isActive: true,
-        phone: '',
-        refreshToken: '',
+        id: 'login-user', firstName: 'Login', lastName: 'User', email: 'login@example.com',
+        password: hashedPassword, role: 'tourist', isActive: true, phone: '', refreshToken: '',
       });
       mockUpdate.mockResolvedValue(undefined);
 
@@ -113,15 +107,21 @@ describe('AuthService', () => {
       const hashedPassword = await bcrypt.hash('correctpass', 12);
 
       mockFindByEmailWithPassword.mockResolvedValue({
-        id: 'user-1',
-        email: 'user@example.com',
-        password: hashedPassword,
-        role: 'tourist',
-        isActive: true,
+        id: 'user-1', email: 'user@example.com', password: hashedPassword, role: 'tourist', isActive: true,
       });
 
       await expect(
         authService.login('user@example.com', 'wrongpass')
+      ).rejects.toThrow('Invalid credentials');
+    });
+
+    it('should throw error for inactive user', async () => {
+      mockFindByEmailWithPassword.mockResolvedValue({
+        id: 'inactive-user', email: 'inactive@example.com', password: 'somehash', role: 'tourist', isActive: false,
+      });
+
+      await expect(
+        authService.login('inactive@example.com', 'anypass')
       ).rejects.toThrow('Invalid credentials');
     });
   });
@@ -136,11 +136,7 @@ describe('AuthService', () => {
       );
 
       mockFindById.mockResolvedValue({
-        id: 'refresh-user',
-        email: 'refresh@example.com',
-        role: 'tourist',
-        isActive: true,
-        refreshToken: validRefreshToken,
+        id: 'refresh-user', email: 'refresh@example.com', role: 'tourist', isActive: true, refreshToken: validRefreshToken,
       });
       mockUpdate.mockResolvedValue(undefined);
 
@@ -152,6 +148,40 @@ describe('AuthService', () => {
     it('should throw error for invalid refresh token', async () => {
       await expect(
         authService.refreshAccessToken('invalid-token')
+      ).rejects.toThrow('Invalid refresh token');
+    });
+
+    it('should throw error when stored token differs', async () => {
+      const jwt = require('jsonwebtoken');
+      const validRefreshToken = jwt.sign(
+        { userId: 'stale-user', email: 'stale@example.com', role: 'tourist' },
+        process.env.JWT_REFRESH_SECRET || 'refresh-secret-key-change',
+        { expiresIn: '30d' }
+      );
+
+      mockFindById.mockResolvedValue({
+        id: 'stale-user', email: 'stale@example.com', role: 'tourist', isActive: true, refreshToken: 'different-token',
+      });
+
+      await expect(
+        authService.refreshAccessToken(validRefreshToken)
+      ).rejects.toThrow('Invalid refresh token');
+    });
+
+    it('should throw error for inactive user', async () => {
+      const jwt = require('jsonwebtoken');
+      const token = jwt.sign(
+        { userId: 'inactive', email: 'inactive@example.com', role: 'tourist' },
+        process.env.JWT_REFRESH_SECRET || 'refresh-secret-key-change',
+        { expiresIn: '30d' }
+      );
+
+      mockFindById.mockResolvedValue({
+        id: 'inactive', email: 'inactive@example.com', role: 'tourist', isActive: false, refreshToken: token,
+      });
+
+      await expect(
+        authService.refreshAccessToken(token)
       ).rejects.toThrow('Invalid refresh token');
     });
   });
@@ -167,11 +197,7 @@ describe('AuthService', () => {
   describe('getProfile', () => {
     it('should return user profile', async () => {
       mockFindById.mockResolvedValue({
-        id: 'profile-user',
-        firstName: 'Profile',
-        lastName: 'User',
-        email: 'profile@example.com',
-        role: 'tourist',
+        id: 'profile-user', firstName: 'Profile', lastName: 'User', email: 'profile@example.com', role: 'tourist',
       });
 
       const profile = await authService.getProfile('profile-user');
@@ -183,19 +209,23 @@ describe('AuthService', () => {
   describe('updateProfile', () => {
     it('should update user profile fields', async () => {
       mockUpdate.mockResolvedValue({
-        id: 'update-user',
-        firstName: 'Updated',
-        lastName: 'Name',
-        phone: '+27000000000',
+        id: 'update-user', firstName: 'Updated', lastName: 'Name', phone: '+27000000000',
       });
 
-      const updated = await authService.updateProfile('update-user', {
-        firstName: 'Updated',
-        phone: '+27000000000',
-      });
-
+      const updated = await authService.updateProfile('update-user', { firstName: 'Updated', phone: '+27000000000' });
       expect(updated).not.toBeNull();
       expect(updated!.firstName).toBe('Updated');
+    });
+
+    it('should hash password when updating profile with password', async () => {
+      mockUpdate.mockImplementation(async (id: string, data: any) => ({
+        id, ...data, password: 'hashed-' + data.password,
+      }));
+
+      const updated = await authService.updateProfile('user-pw', { firstName: 'NewName', password: 'newPassword123' });
+      expect(updated).not.toBeNull();
+      expect(updated!.password).not.toBe('newPassword123');
+      expect(updated!.password).toContain('$2a$');
     });
   });
 
@@ -204,10 +234,7 @@ describe('AuthService', () => {
       const bcrypt = require('bcryptjs');
       const currentHash = await bcrypt.hash('CurrentPass123', 12);
 
-      mockFindByIdWithPassword.mockResolvedValue({
-        id: 'pw-user',
-        password: currentHash,
-      });
+      mockFindByIdWithPassword.mockResolvedValue({ id: 'pw-user', password: currentHash });
       mockUpdate.mockResolvedValue(undefined);
 
       await expect(
@@ -219,10 +246,7 @@ describe('AuthService', () => {
       const bcrypt = require('bcryptjs');
       const currentHash = await bcrypt.hash('realpass', 12);
 
-      mockFindByIdWithPassword.mockResolvedValue({
-        id: 'pw-user',
-        password: currentHash,
-      });
+      mockFindByIdWithPassword.mockResolvedValue({ id: 'pw-user', password: currentHash });
 
       await expect(
         authService.changePassword('pw-user', 'wrongpass', 'newpass')

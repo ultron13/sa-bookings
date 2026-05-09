@@ -10,7 +10,7 @@ export class PaymentService {
 
   constructor() {
     this.stripe = new Stripe(config.stripe.secretKey, {
-      apiVersion: '2024-11-20.acacia',
+      apiVersion: '2024-11-20.acacia' as any,
     });
     this.paymentRepo = new PaymentRepository();
   }
@@ -26,7 +26,7 @@ export class PaymentService {
       amount: amountInCents,
       currency,
       metadata: { bookingId },
-      automaticPaymentMethods: { enabled: true },
+      automatic_payment_methods: { enabled: true } as any,
     });
 
     const payment = await this.paymentRepo.create({
