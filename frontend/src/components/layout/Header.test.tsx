@@ -26,6 +26,12 @@ jest.mock('../../contexts/CurrencyContext', () => ({
   CurrencyProvider: ({ children }: any) => <>{children}</>,
 }));
 
+jest.mock('../../contexts/NotificationContext', () => ({
+  __esModule: true,
+  useNotifications: () => ({ unreadCount: 0, notifications: [], fetchNotifications: jest.fn(), markAsRead: jest.fn(), markAllAsRead: jest.fn() }),
+  NotificationProvider: ({ children }: any) => <>{children}</>,
+}));
+
 import { Header } from './Header';
 
 const touristUser = { id: '1', firstName: 'John', lastName: 'Doe', email: 'john@test.com', role: 'tourist', isActive: true, createdAt: '' };

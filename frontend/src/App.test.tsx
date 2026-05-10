@@ -17,12 +17,22 @@ jest.mock('./services/api', () => ({
   __esModule: true,
   default: {
     getFeatured: () => Promise.resolve({ data: { data: [] } }),
+    getPopularAccommodations: () => Promise.resolve({ data: { data: [] } }),
     getProfile: () => Promise.reject(new Error('no token')),
+    getUnreadCount: () => Promise.resolve({ data: { data: { count: 0 } } }),
   },
   api: {
     getFeatured: () => Promise.resolve({ data: { data: [] } }),
+    getPopularAccommodations: () => Promise.resolve({ data: { data: [] } }),
     getProfile: () => Promise.reject(new Error('no token')),
+    getUnreadCount: () => Promise.resolve({ data: { data: { count: 0 } } }),
   },
+}));
+
+jest.mock('./contexts/NotificationContext', () => ({
+  __esModule: true,
+  useNotifications: () => ({ unreadCount: 0, notifications: [], fetchNotifications: jest.fn(), markAsRead: jest.fn(), markAllAsRead: jest.fn() }),
+  NotificationProvider: ({ children }: any) => <>{children}</>,
 }));
 
 import { AppRoutes } from './App';

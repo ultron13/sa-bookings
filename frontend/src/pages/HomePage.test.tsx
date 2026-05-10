@@ -14,9 +14,11 @@ jest.mock('../services/api', () => ({
   __esModule: true,
   default: {
     getFeatured: () => Promise.resolve({ data: { data: mockFeatured } }),
+    getPopularAccommodations: () => Promise.resolve({ data: { data: [] } }),
   },
   api: {
     getFeatured: () => Promise.resolve({ data: { data: mockFeatured } }),
+    getPopularAccommodations: () => Promise.resolve({ data: { data: [] } }),
   },
 }));
 

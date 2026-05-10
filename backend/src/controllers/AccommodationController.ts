@@ -111,4 +111,24 @@ export class AccommodationController {
       next(error);
     }
   }
+
+  async getSimilar(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 6, 12);
+      const data = await accommodationService.getSimilar(req.params.id, limit);
+      res.json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getPopular(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const limit = Math.min(parseInt(req.query.limit as string) || 8, 20);
+      const data = await accommodationService.getPopular(limit);
+      res.json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

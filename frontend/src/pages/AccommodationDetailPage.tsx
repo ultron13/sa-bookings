@@ -15,6 +15,7 @@ export const AccommodationDetailPage: React.FC = () => {
   const { format } = useCurrency();
   const [accommodation, setAccommodation] = useState<Accommodation | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [similar, setSimilar] = useState<Accommodation[]>([]);
   const [loading, setLoading] = useState(true);
   const [bookingForm, setBookingForm] = useState({ checkIn: '', checkOut: '', guests: 1, specialRequests: '' });
   const [bookingLoading, setBookingLoading] = useState(false);
@@ -34,6 +35,7 @@ export const AccommodationDetailPage: React.FC = () => {
       })
       .catch(() => navigate('/accommodations'))
       .finally(() => setLoading(false));
+    api.getSimilarAccommodations(id, 4).then(({ data }: any) => setSimilar(data.data || [])).catch(() => {});
   }, [id, navigate]);
 
   const calculateNights = useCallback(() => {
@@ -296,6 +298,32 @@ export const AccommodationDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Similar Properties */}
+      {similar.length > 0 && (
+        <div className="mt-12 border-t border-gray-100 pt-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Similar Properties in {accommodation?.province}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {similar.map((acc) => (
+              <a key={acc.id} href={`/accommodations/${acc.id}`} className="card group block">
+                <div className="aspect-[4/3] bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-4xl">
+                  {acc.type === 'game_lodge' ? '🦁' : acc.type === 'villa' ? '🏡' : acc.type === 'cottage' ? '🛖' : '🏨'}
+                </div>
+                <div className="p-4">
+                  <p className="text-xs text-gray-500 mb-1">{acc.city}</p>
+                  <h3 className="font-semibold text-gray-900 group-hover:text-sa-green transition-colors truncate">{acc.name}</h3>
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="text-yellow-500 text-sm">★</span>
+                    <span className="text-sm font-medium">{Number(acc.averageRating).toFixed(1)}</span>
+                    <span className="text-xs text-gray-400">({acc.reviewCount})</span>
+                  </div>
+                  <p className="mt-1 font-bold text-gray-900 text-sm">{format(Number(acc.pricePerNight))} <span className="font-normal text-gray-500">/ night</span></p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

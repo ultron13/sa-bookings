@@ -21,6 +21,7 @@ let mockCreateBookingFn = jest.fn().mockResolvedValue({ data: { data: { id: 'new
 let mockCreateReviewFn = jest.fn().mockResolvedValue({ data: { data: { id: 'r3', rating: 5, comment: 'Amazing!' } } });
 let mockGetAvailabilityFn = jest.fn().mockResolvedValue({ data: { data: [] } });
 let mockGetOrCreateConversationFn = jest.fn().mockResolvedValue({ data: { data: { id: 'conv1' } } });
+let mockGetSimilarFn = jest.fn().mockResolvedValue({ data: { data: [] } });
 
 jest.mock('../services/api', () => ({
   __esModule: true,
@@ -31,6 +32,7 @@ jest.mock('../services/api', () => ({
     createReview: (...args: any[]) => mockCreateReviewFn(...args),
     getAvailability: (...args: any[]) => mockGetAvailabilityFn(...args),
     getOrCreateConversation: (...args: any[]) => mockGetOrCreateConversationFn(...args),
+    getSimilarAccommodations: (...args: any[]) => mockGetSimilarFn(...args),
   },
   api: {
     getAccommodation: (...args: any[]) => mockGetAccommodationFn(...args),
@@ -39,6 +41,7 @@ jest.mock('../services/api', () => ({
     createReview: (...args: any[]) => mockCreateReviewFn(...args),
     getAvailability: (...args: any[]) => mockGetAvailabilityFn(...args),
     getOrCreateConversation: (...args: any[]) => mockGetOrCreateConversationFn(...args),
+    getSimilarAccommodations: (...args: any[]) => mockGetSimilarFn(...args),
   },
 }));
 
@@ -75,6 +78,9 @@ describe('AccommodationDetailPage', () => {
     mockGetReviewsFn = jest.fn().mockResolvedValue({ data: { data: mockReviewsData } });
     mockCreateBookingFn = jest.fn().mockResolvedValue({ data: { data: { id: 'new-booking-id' } } });
     mockCreateReviewFn = jest.fn().mockResolvedValue({ data: { data: { id: 'r3', rating: 5, comment: 'Amazing!' } } });
+    mockGetAvailabilityFn = jest.fn().mockResolvedValue({ data: { data: [] } });
+    mockGetOrCreateConversationFn = jest.fn().mockResolvedValue({ data: { data: { id: 'conv1' } } });
+    mockGetSimilarFn = jest.fn().mockResolvedValue({ data: { data: [] } });
     window.alert = jest.fn();
   });
 

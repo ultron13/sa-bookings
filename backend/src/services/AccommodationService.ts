@@ -56,4 +56,12 @@ export class AccommodationService {
   async getProvinceCounts(): Promise<{ province: string; count: number }[]> {
     return this.repo.getProvinceCounts();
   }
+
+  async getSimilar(accommodationId: string, limit: number = 6): Promise<Accommodation[]> {
+    return this.repo.getSimilar(accommodationId, limit);
+  }
+
+  async getPopular(limit: number = 8): Promise<Accommodation[]> {
+    return this.repo.getPopular(limit);
+  }
 }

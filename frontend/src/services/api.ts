@@ -202,6 +202,32 @@ class ApiService {
   sendMessage(conversationId: string, content: string) {
     return this.client.post(`/messages/conversations/${conversationId}/messages`, { content });
   }
+
+  // Notifications
+  getNotifications(page: number = 1) {
+    return this.client.get('/notifications', { params: { page } });
+  }
+
+  getUnreadCount() {
+    return this.client.get('/notifications/unread-count');
+  }
+
+  markNotificationRead(id: string) {
+    return this.client.put(`/notifications/${id}/read`);
+  }
+
+  markAllNotificationsRead() {
+    return this.client.put('/notifications/read-all');
+  }
+
+  // Recommendations
+  getPopularAccommodations(limit: number = 8) {
+    return this.client.get('/accommodations/popular', { params: { limit } });
+  }
+
+  getSimilarAccommodations(id: string, limit: number = 6) {
+    return this.client.get(`/accommodations/${id}/similar`, { params: { limit } });
+  }
 }
 
 export const api = new ApiService();

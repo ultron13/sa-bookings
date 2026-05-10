@@ -48,6 +48,8 @@ export const SearchPage: React.FC = () => {
   const page = parseInt(searchParams.get('page') || '1');
   const checkIn = searchParams.get('checkIn') || '';
   const checkOut = searchParams.get('checkOut') || '';
+  const query = searchParams.get('q') || '';
+  const [searchInput, setSearchInput] = useState(query);
 
   useEffect(() => {
     setLoading(true);
@@ -62,14 +64,15 @@ export const SearchPage: React.FC = () => {
       sortOrder,
       page,
       pageSize: 20,
-    })
+      query: query || undefined,
+    } as any)
       .then(({ data }: any) => {
         setAccommodations(data.data);
         setMeta(data.meta);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [province, type, minPrice, maxPrice, guests, sort, page]);
+  }, [province, type, minPrice, maxPrice, guests, sort, page, query]);
 
   const updateFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams);
@@ -137,9 +140,24 @@ export const SearchPage: React.FC = () => {
         </aside>
 
         <div className="flex-1">
+          <form
+            onSubmit={(e) => { e.preventDefault(); updateFilter('q', searchInput); }}
+            className="flex gap-2 mb-6"
+          >
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search by name, description, city..."
+              className="input-field flex-1"
+              aria-label="Search accommodations"
+            />
+            <button type="submit" className="btn-primary px-5">Search</button>
+          </form>
+
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-900">
-              {province ? `${province} Accommodations` : 'All Accommodations'}
+              {query ? `Results for "${query}"` : province ? `${province} Accommodations` : 'All Accommodations'}
             </h1>
             {meta && <p className="text-sm text-gray-500">{meta.totalCount} properties found</p>}
           </div>

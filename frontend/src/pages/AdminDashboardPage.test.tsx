@@ -113,8 +113,8 @@ describe('AdminDashboardPage', () => {
 
   it('should display monthly revenue section', async () => {
     renderPage();
-    await waitFor(() => expect(screen.getByText('Monthly Revenue')).toBeInTheDocument());
-    expect(screen.getByText('2026-01')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/Monthly Revenue/)).toBeInTheDocument());
+    expect(screen.getByText('01')).toBeInTheDocument();
   });
 
   it('should switch to users tab and show users', async () => {
@@ -171,6 +171,31 @@ describe('AdminDashboardPage', () => {
     expect(screen.getByText('overview')).toBeInTheDocument();
     expect(screen.getByText('users')).toBeInTheDocument();
     expect(screen.getByText('bookings')).toBeInTheDocument();
+    expect(screen.getByText('analytics')).toBeInTheDocument();
+  });
+
+  it('should switch to analytics tab and show stats', async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Admin Dashboard')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('analytics'));
+    expect(screen.getByText('Conversion Rate')).toBeInTheDocument();
+    expect(screen.getByText('Avg Booking Value')).toBeInTheDocument();
+    expect(screen.getByText('Occupancy Rate')).toBeInTheDocument();
+  });
+
+  it('should show revenue by province in analytics tab', async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Admin Dashboard')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('analytics'));
+    expect(screen.getByText('Revenue by Province')).toBeInTheDocument();
+    expect(screen.getByText('Western Cape')).toBeInTheDocument();
+  });
+
+  it('should show booking status distribution in analytics tab', async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Admin Dashboard')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('analytics'));
+    expect(screen.getByText('Booking Status Distribution')).toBeInTheDocument();
   });
 
   it('should show role badges in users tab', async () => {

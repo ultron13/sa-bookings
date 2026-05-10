@@ -44,6 +44,7 @@ function getReviewLabel(rating: number, reviewCount: number): { label: string; c
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [featured, setFeatured] = useState<Accommodation[]>([]);
+  const [popular, setPopular] = useState<Accommodation[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProvince, setSelectedProvince] = useState('');
   const [checkIn, setCheckIn] = useState('');
@@ -51,6 +52,7 @@ export const HomePage: React.FC = () => {
 
   useEffect(() => {
     api.getFeatured().then(({ data }: any) => setFeatured(data.data)).catch(() => {});
+    api.getPopularAccommodations(8).then(({ data }: any) => setPopular(data.data)).catch(() => {});
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -182,6 +184,56 @@ export const HomePage: React.FC = () => {
                 );
               })}
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* Popular Stays */}
+      {popular.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Popular Stays</h2>
+              <p className="text-gray-500 mt-1">Top-rated properties loved by travellers</p>
+            </div>
+            <Link to="/accommodations?sortBy=reviewCount&sortOrder=DESC" className="text-sm text-sa-green font-medium hover:underline">
+              See all →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {popular.map((acc) => {
+              const reviewInfo = getReviewLabel(Number(acc.averageRating), acc.reviewCount);
+              return (
+                <Link key={acc.id} to={`/accommodations/${acc.id}`} className="card group">
+                  <div className="aspect-[4/3] bg-gray-200 relative overflow-hidden">
+                    <div className="w-full h-full bg-gradient-to-br from-amber-100 to-orange-200 flex items-center justify-center text-5xl">
+                      {acc.type === 'game_lodge' ? '🦁' : acc.type === 'villa' ? '🏡' : acc.type === 'cottage' ? '🛖' : '🏨'}
+                    </div>
+                    <div className="absolute top-3 left-3">
+                      <span className="badge bg-sa-gold text-white">{(acc.type || '').replace('_', ' ')}</span>
+                    </div>
+                    {acc.reviewCount > 0 && (
+                      <div className="absolute top-3 right-3 bg-white rounded-md px-2 py-0.5 text-xs font-bold text-gray-900 shadow">
+                        ★ {Number(acc.averageRating).toFixed(1)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <p className="text-xs text-gray-500 mb-1">{acc.city}, {acc.province}</p>
+                    <h3 className="font-semibold text-gray-900 group-hover:text-sa-green transition-colors truncate">{acc.name}</h3>
+                    <div className="flex items-center gap-2 mt-2">
+                      {reviewInfo && (
+                        <span className={`text-xs font-semibold text-white px-2 py-0.5 rounded ${reviewInfo.color}`}>
+                          {reviewInfo.label}
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-400">{acc.reviewCount} reviews</span>
+                    </div>
+                    <p className="mt-2 font-bold text-gray-900">R {Number(acc.pricePerNight).toLocaleString()} <span className="font-normal text-sm text-gray-500">/ night</span></p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}

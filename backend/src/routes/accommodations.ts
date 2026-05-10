@@ -10,7 +10,9 @@ const controller = new AccommodationController();
 
 router.get('/search', controller.search.bind(controller));
 router.get('/featured', controller.getFeatured.bind(controller));
+router.get('/popular', controller.getPopular.bind(controller));
 router.get('/province-counts', controller.getProvinceCounts.bind(controller));
+router.get('/:id/similar', controller.getSimilar.bind(controller));
 router.get('/:id', controller.getById.bind(controller));
 
 router.get('/', authenticate, authorize(UserRole.HOST), controller.getMyListings.bind(controller));

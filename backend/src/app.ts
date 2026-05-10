@@ -16,6 +16,7 @@ import paymentRoutes from './routes/payments';
 import reviewRoutes from './routes/reviews';
 import adminRoutes from './routes/admin';
 import messageRoutes from './routes/messages';
+import notificationRoutes from './routes/notifications';
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/messages', messageRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

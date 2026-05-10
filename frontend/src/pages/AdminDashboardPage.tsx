@@ -6,7 +6,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'bookings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'bookings' | 'analytics'>('overview');
   const [loading, setLoading] = useState(true);
   const [togglingUser, setTogglingUser] = useState<string | null>(null);
 
@@ -55,7 +55,7 @@ export const AdminDashboardPage: React.FC = () => {
 
       {/* Tab navigation */}
       <div className="flex gap-1 mb-8 bg-gray-100 rounded-lg p-1 w-fit">
-        {(['overview','users','bookings'] as const).map((tab) => (
+        {(['overview','users','bookings','analytics'] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`px-5 py-2 rounded-md text-sm font-medium capitalize transition-colors ${activeTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
             {tab}
@@ -106,21 +106,107 @@ export const AdminDashboardPage: React.FC = () => {
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="font-semibold text-gray-900 mb-4">Monthly Revenue</h2>
-            <div className="space-y-2">
-              {(stats.revenueByMonth || []).map((m: any) => {
-                const maxRev = Math.max(...(stats.revenueByMonth || []).map((x: any) => Number(x.revenue || 0)), 1);
-                const pct = (Number(m.revenue || 0) / maxRev) * 100;
-                return (
-                  <div key={m.month} className="flex items-center gap-3">
-                    <span className="text-xs text-gray-500 w-16">{m.month}</span>
-                    <div className="flex-1 bg-gray-100 rounded-full h-4">
-                      <div className="bg-sa-green h-4 rounded-full" style={{ width: `${pct}%` }} />
+            <h2 className="font-semibold text-gray-900 mb-6">Monthly Revenue ({new Date().getFullYear()})</h2>
+            {(stats.revenueByMonth || []).length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-8">No revenue data yet</p>
+            ) : (
+              <div className="flex items-end gap-2 h-48">
+                {(stats.revenueByMonth || []).map((m: any) => {
+                  const maxRev = Math.max(...(stats.revenueByMonth || []).map((x: any) => Number(x.revenue || 0)), 1);
+                  const pct = (Number(m.revenue || 0) / maxRev) * 100;
+                  const monthLabel = m.month ? m.month.slice(5) : '';
+                  return (
+                    <div key={m.month} className="flex-1 flex flex-col items-center gap-1 group">
+                      <span className="text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        R {Number(m.revenue || 0).toLocaleString()}
+                      </span>
+                      <div className="w-full bg-gray-100 rounded-t-sm relative" style={{ height: '160px' }}>
+                        <div
+                          className="absolute bottom-0 left-0 right-0 bg-sa-green rounded-t-sm transition-all duration-500"
+                          style={{ height: `${Math.max(pct, 2)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-400">{monthLabel}</span>
                     </div>
-                    <span className="text-xs font-medium text-gray-700 w-24 text-right">R {Number(m.revenue || 0).toLocaleString()}</span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'analytics' && stats && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-1">Conversion Rate</h3>
+              <p className="text-3xl font-bold text-sa-green">
+                {stats.totalBookings > 0 ? ((stats.bookingsByStatus?.find((s: any) => s.status === 'confirmed')?.count || 0) / stats.totalBookings * 100).toFixed(1) : 0}%
+              </p>
+              <p className="text-xs text-gray-500 mt-1">confirmed / total bookings</p>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-1">Avg Booking Value</h3>
+              <p className="text-3xl font-bold text-blue-600">
+                R {stats.totalBookings > 0 ? (stats.totalRevenue / stats.totalBookings).toFixed(0) : 0}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">revenue per booking</p>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-1">Occupancy Rate</h3>
+              <p className="text-3xl font-bold text-amber-600">{stats.occupancyRate}%</p>
+              <p className="text-xs text-gray-500 mt-1">estimated occupancy</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Revenue by Province</h3>
+              <div className="space-y-3">
+                {(stats.topProvinces || []).map((p: any, i: number) => {
+                  const max = Math.max(...(stats.topProvinces || []).map((x: any) => Number(x.bookings || 0)), 1);
+                  const pct = (Number(p.bookings || 0) / max) * 100;
+                  return (
+                    <div key={p.province} className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-700">{p.province}</span>
+                        <span className="font-medium text-gray-900">{p.bookings} bookings</span>
+                      </div>
+                      <div className="bg-gray-100 rounded-full h-2">
+                        <div className="h-2 rounded-full bg-sa-green" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Booking Status Distribution</h3>
+              <div className="space-y-3">
+                {(stats.bookingsByStatus || []).map((s: any) => {
+                  const total = stats.totalBookings || 1;
+                  const pct = (Number(s.count || 0) / total) * 100;
+                  const colors: Record<string, string> = {
+                    confirmed: 'bg-blue-500',
+                    completed: 'bg-green-500',
+                    pending: 'bg-yellow-500',
+                    cancelled: 'bg-red-400',
+                  };
+                  return (
+                    <div key={s.status} className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="capitalize text-gray-700">{s.status}</span>
+                        <span className="font-medium text-gray-900">{pct.toFixed(1)}% ({s.count})</span>
+                      </div>
+                      <div className="bg-gray-100 rounded-full h-2">
+                        <div className={`h-2 rounded-full ${colors[s.status] || 'bg-gray-400'}`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

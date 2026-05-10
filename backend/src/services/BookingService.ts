@@ -5,6 +5,7 @@ import { Booking } from '../entities/Booking';
 import { BookingStatus } from '../types/enums';
 import { config } from '../config';
 import { PaymentService } from './PaymentService';
+import { notificationService } from './NotificationService';
 
 export class BookingService {
   private bookingRepo: BookingRepository;
@@ -110,6 +111,22 @@ export class BookingService {
       await this.bookingRepo.update(booking.id, { paymentId: paymentIntent.id } as any);
     }
 
+    notificationService.send({
+      userId: data.userId,
+      title: 'Booking Created',
+      message: `Your booking for ${accommodation.name} has been ${config.booking.autoConfirm ? 'confirmed' : 'submitted and is pending confirmation'}.`,
+      type: config.booking.autoConfirm ? 'booking_confirmed' : 'booking_pending',
+      relatedId: booking.id,
+    }).catch(() => {});
+
+    notificationService.send({
+      userId: accommodation.hostId,
+      title: 'New Booking Request',
+      message: `You have a new booking request for ${accommodation.name}.`,
+      type: 'booking_pending',
+      relatedId: booking.id,
+    }).catch(() => {});
+
     return this.bookingRepo.findById(booking.id) as Promise<Booking>;
   }
 
@@ -137,7 +154,17 @@ export class BookingService {
       }
     }
 
-    return this.bookingRepo.cancelBooking(bookingId, reason, refundAmount) as Promise<Booking>;
+    const cancelled = await this.bookingRepo.cancelBooking(bookingId, reason, refundAmount) as Booking;
+
+    notificationService.send({
+      userId: booking.userId,
+      title: 'Booking Cancelled',
+      message: `Your booking (ref: ${booking.reference}) has been cancelled.${refundAmount > 0 ? ` A refund of R${refundAmount.toFixed(2)} will be processed.` : ''}`,
+      type: 'booking_cancelled',
+      relatedId: bookingId,
+    }).catch(() => {});
+
+    return cancelled;
   }
 
   async confirm(bookingId: string): Promise<Booking | null> {

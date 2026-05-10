@@ -60,6 +60,13 @@ export class AccommodationRepository {
       query.andWhere('acc.averageRating >= :minRating', { minRating: params.rating });
     }
 
+    if ((params as any).query) {
+      query.andWhere(
+        "to_tsvector('english', acc.name || ' ' || acc.description || ' ' || acc.city) @@ plainto_tsquery('english', :ftsQuery)",
+        { ftsQuery: (params as any).query }
+      );
+    }
+
     const sortBy = params.sortBy || 'createdAt';
     const sortOrder = params.sortOrder || 'DESC';
     query.orderBy(`acc.${sortBy}`, sortOrder);
@@ -118,6 +125,28 @@ export class AccommodationRepository {
       .where('acc.isActive = true')
       .groupBy('acc.province')
       .getRawMany();
+  }
+
+  async getSimilar(accommodationId: string, limit: number = 6): Promise<Accommodation[]> {
+    const target = await this.repo.findOne({ where: { id: accommodationId } });
+    if (!target) return [];
+    const price = Number(target.pricePerNight);
+    return this.repo.createQueryBuilder('acc')
+      .where('acc.id != :id', { id: accommodationId })
+      .andWhere('acc.isActive = true AND acc.isAvailable = true')
+      .andWhere('acc.province = :province', { province: target.province })
+      .andWhere('acc.pricePerNight BETWEEN :min AND :max', { min: price * 0.5, max: price * 2 })
+      .orderBy('acc.averageRating', 'DESC')
+      .take(limit)
+      .getMany();
+  }
+
+  async getPopular(limit: number = 8): Promise<Accommodation[]> {
+    return this.repo.find({
+      where: { isActive: true, isAvailable: true },
+      order: { reviewCount: 'DESC', averageRating: 'DESC' },
+      take: limit,
+    });
   }
 
   async updateRating(id: string): Promise<void> {

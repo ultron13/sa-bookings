@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCurrency, Currency } from '../../contexts/CurrencyContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import { UserRole } from '../../types';
 
 const provinces = [
@@ -19,8 +20,18 @@ const currencies: { value: Currency; label: string }[] = [
 export const Header: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const { currency, setCurrency } = useCurrency();
+  const { unreadCount, notifications, fetchNotifications, markAsRead, markAllAsRead } = useNotifications();
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = React.useState(false);
+  const [showNotifications, setShowNotifications] = React.useState(false);
+
+  const handleToggleNotifications = async () => {
+    if (!showNotifications) {
+      await fetchNotifications();
+    }
+    setShowNotifications((v) => !v);
+    setShowDropdown(false);
+  };
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
@@ -72,8 +83,57 @@ export const Header: React.FC = () => {
                   </svg>
                   Messages
                 </Link>
+
+                {/* Notification bell */}
                 <div className="relative">
-                  <button onClick={() => setShowDropdown(!showDropdown)} className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-sa-green transition-colors">
+                  <button
+                    onClick={handleToggleNotifications}
+                    aria-label="Notifications"
+                    className="relative p-1 text-gray-500 hover:text-sa-green transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {showNotifications && (
+                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden flex flex-col">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                        <span className="text-sm font-semibold text-gray-900">Notifications</span>
+                        {unreadCount > 0 && (
+                          <button onClick={markAllAsRead} className="text-xs text-sa-green hover:underline">
+                            Mark all read
+                          </button>
+                        )}
+                      </div>
+                      <div className="overflow-y-auto flex-1">
+                        {notifications.length === 0 ? (
+                          <div className="px-4 py-6 text-center text-sm text-gray-400">No notifications yet</div>
+                        ) : (
+                          notifications.map((n) => (
+                            <div
+                              key={n.id}
+                              onClick={() => markAsRead(n.id)}
+                              className={`px-4 py-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50 ${!n.isRead ? 'bg-blue-50' : ''}`}
+                            >
+                              <p className="text-sm font-medium text-gray-900">{n.title}</p>
+                              <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
+                              <p className="text-xs text-gray-400 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <button onClick={() => { setShowDropdown(!showDropdown); setShowNotifications(false); }} className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-sa-green transition-colors">
                     <div className="w-8 h-8 bg-sa-green rounded-full flex items-center justify-center text-white text-sm font-semibold">
                       {user?.firstName?.[0]}{user?.lastName?.[0]}
                     </div>

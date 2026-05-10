@@ -9,6 +9,10 @@ jest.mock('../config', () => ({
   },
 }));
 
+jest.mock('../services/NotificationService', () => ({
+  notificationService: { send: jest.fn().mockResolvedValue({}) },
+}));
+
 jest.mock('../repositories/AccommodationRepository', () => {
   const accs: Record<string, any> = {
     'acc-123': {
