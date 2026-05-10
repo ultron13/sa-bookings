@@ -115,7 +115,7 @@ describe('Header', () => {
     mockUseAuth = { user: adminUser, isAuthenticated: true, isLoading: false, login: jest.fn(), register: jest.fn(), logout: mockLogout };
     render(<MemoryRouter><Header /></MemoryRouter>);
     fireEvent.click(screen.getByText('AU').closest('button')!);
-    expect(screen.getByText('Admin Panel')).toBeInTheDocument();
+    expect(screen.getByText('Admin Dashboard')).toBeInTheDocument();
   });
 
   it('should not show Admin Panel for tourist user', () => {

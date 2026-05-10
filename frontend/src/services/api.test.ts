@@ -271,4 +271,87 @@ describe('ApiService', () => {
     api.respondToReview('r1', 'Thank you');
     expect(mockAxiosInstance.put).toHaveBeenCalledWith('/reviews/r1/respond', { response: 'Thank you' });
   });
+
+  it('createReview should call correct endpoint', () => {
+    const { api } = require('./api');
+    api.createReview({ accommodationId: 'a1', rating: 5, comment: 'Great!' });
+    expect(mockAxiosInstance.post).toHaveBeenCalledWith('/reviews', { accommodationId: 'a1', rating: 5, comment: 'Great!' });
+  });
+
+  it('getHostBookings should call correct endpoint with page', () => {
+    const { api } = require('./api');
+    api.getHostBookings(2);
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/bookings/host', { params: { page: 2 } });
+  });
+
+  it('getHostBookings should default to page 1', () => {
+    const { api } = require('./api');
+    api.getHostBookings();
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/bookings/host', { params: { page: 1 } });
+  });
+
+  it('getAdminDashboard should call correct endpoint', () => {
+    const { api } = require('./api');
+    api.getAdminDashboard();
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/admin/dashboard');
+  });
+
+  it('getAdminUsers should call correct endpoint with page', () => {
+    const { api } = require('./api');
+    api.getAdminUsers(3);
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/admin/users', { params: { page: 3 } });
+  });
+
+  it('getAdminUsers should default to page 1', () => {
+    const { api } = require('./api');
+    api.getAdminUsers();
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/admin/users', { params: { page: 1 } });
+  });
+
+  it('toggleUserStatus should call correct endpoint', () => {
+    const { api } = require('./api');
+    api.toggleUserStatus('u1');
+    expect(mockAxiosInstance.put).toHaveBeenCalledWith('/admin/users/u1/toggle-status');
+  });
+
+  it('getAdminBookings should call correct endpoint with page', () => {
+    const { api } = require('./api');
+    api.getAdminBookings(2);
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/admin/bookings', { params: { page: 2 } });
+  });
+
+  it('getAdminBookings should default to page 1', () => {
+    const { api } = require('./api');
+    api.getAdminBookings();
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/admin/bookings', { params: { page: 1 } });
+  });
+
+  it('getAccommodationReviews should default to page 1', () => {
+    const { api } = require('./api');
+    api.getAccommodationReviews('a1');
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/reviews/accommodation/a1', { params: { page: 1 } });
+  });
+
+  it('getMyBookings should default to page 1', () => {
+    const { api } = require('./api');
+    api.getMyBookings();
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/bookings', { params: { page: 1 } });
+  });
+
+  it('cancelBooking should call with undefined reason when omitted', () => {
+    const { api } = require('./api');
+    api.cancelBooking('b1');
+    expect(mockAxiosInstance.put).toHaveBeenCalledWith('/bookings/b1/cancel', { reason: undefined });
+  });
+
+  it('should handle 401 when error.config is null after token refresh', async () => {
+    localStorage.setItem('refreshToken', 'valid-rt');
+    require('./api');
+    const errorFn = mockAxiosInstance.interceptors.response.use.mock.calls[0][1];
+    const axios = require('axios');
+    axios.post.mockResolvedValue({ data: { data: { accessToken: 'new-token', refreshToken: 'new-rt' } } });
+    const error = { response: { status: 401 }, config: null };
+    await expect(errorFn(error)).rejects.toBe(error);
+    expect(axios.post).toHaveBeenCalled();
+  });
 });

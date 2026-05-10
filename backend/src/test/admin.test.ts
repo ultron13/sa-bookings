@@ -24,6 +24,7 @@ jest.mock('../repositories/BookingRepository', () => ({
       { month: '2026-02', revenue: 20000 },
     ]),
     findByUser: jest.fn().mockResolvedValue([[{ id: 'b1', status: 'confirmed' }], 1]),
+    findAll: jest.fn().mockResolvedValue([[{ id: 'b1', status: 'confirmed' }], 1]),
   })),
 }));
 

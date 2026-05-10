@@ -73,4 +73,80 @@ describe('ProfilePage', () => {
     fireEvent.submit(forms[1]);
     expect(mockChangePassword).toHaveBeenCalledWith('oldPass123', 'newPass456');
   });
+
+  it('should show error when passwords do not match', async () => {
+    const { ProfilePage } = require('./ProfilePage');
+    const { container } = render(<MemoryRouter><ProfilePage /></MemoryRouter>);
+    const forms = container.querySelectorAll('form');
+    const pwInputs = forms[1].querySelectorAll('input[type="password"]');
+    fireEvent.change(pwInputs[0], { target: { value: 'oldPass123' } });
+    fireEvent.change(pwInputs[1], { target: { value: 'newPass456' } });
+    fireEvent.change(pwInputs[2], { target: { value: 'different789' } });
+    fireEvent.submit(forms[1]);
+    const { waitFor } = await import('@testing-library/react');
+    await waitFor(() => expect(screen.getByText('Passwords do not match')).toBeInTheDocument());
+    expect(mockChangePassword).not.toHaveBeenCalled();
+  });
+
+  it('should show success message after profile update', async () => {
+    mockUpdateProfile = jest.fn(() => Promise.resolve());
+    const { ProfilePage } = require('./ProfilePage');
+    const { container } = render(<MemoryRouter><ProfilePage /></MemoryRouter>);
+    const forms = container.querySelectorAll('form');
+    fireEvent.submit(forms[0]);
+    const { waitFor } = await import('@testing-library/react');
+    await waitFor(() => expect(screen.getByText('Profile updated successfully')).toBeInTheDocument());
+  });
+
+  it('should show error message when profile update fails', async () => {
+    mockUpdateProfile = jest.fn(() => Promise.reject(new Error('Network error')));
+    const { ProfilePage } = require('./ProfilePage');
+    const { container } = render(<MemoryRouter><ProfilePage /></MemoryRouter>);
+    const forms = container.querySelectorAll('form');
+    fireEvent.submit(forms[0]);
+    const { waitFor } = await import('@testing-library/react');
+    await waitFor(() => expect(screen.getByText('Failed to update profile')).toBeInTheDocument());
+  });
+
+  it('should show success message when password changed', async () => {
+    mockChangePassword = jest.fn(() => Promise.resolve());
+    const { ProfilePage } = require('./ProfilePage');
+    const { container } = render(<MemoryRouter><ProfilePage /></MemoryRouter>);
+    const forms = container.querySelectorAll('form');
+    const pwInputs = forms[1].querySelectorAll('input[type="password"]');
+    fireEvent.change(pwInputs[0], { target: { value: 'old123' } });
+    fireEvent.change(pwInputs[1], { target: { value: 'new456Pass' } });
+    fireEvent.change(pwInputs[2], { target: { value: 'new456Pass' } });
+    fireEvent.submit(forms[1]);
+    const { waitFor } = await import('@testing-library/react');
+    await waitFor(() => expect(screen.getByText('Password changed successfully')).toBeInTheDocument());
+  });
+
+  it('should show API error when password change fails', async () => {
+    mockChangePassword = jest.fn(() => Promise.reject({ response: { data: { error: 'Wrong current password' } } }));
+    const { ProfilePage } = require('./ProfilePage');
+    const { container } = render(<MemoryRouter><ProfilePage /></MemoryRouter>);
+    const forms = container.querySelectorAll('form');
+    const pwInputs = forms[1].querySelectorAll('input[type="password"]');
+    fireEvent.change(pwInputs[0], { target: { value: 'wrongOld' } });
+    fireEvent.change(pwInputs[1], { target: { value: 'newPass456' } });
+    fireEvent.change(pwInputs[2], { target: { value: 'newPass456' } });
+    fireEvent.submit(forms[1]);
+    const { waitFor } = await import('@testing-library/react');
+    await waitFor(() => expect(screen.getByText('Wrong current password')).toBeInTheDocument());
+  });
+
+  it('should show fallback error when password change fails without response', async () => {
+    mockChangePassword = jest.fn(() => Promise.reject(new Error('Network error')));
+    const { ProfilePage } = require('./ProfilePage');
+    const { container } = render(<MemoryRouter><ProfilePage /></MemoryRouter>);
+    const forms = container.querySelectorAll('form');
+    const pwInputs = forms[1].querySelectorAll('input[type="password"]');
+    fireEvent.change(pwInputs[0], { target: { value: 'oldPass' } });
+    fireEvent.change(pwInputs[1], { target: { value: 'newPass456' } });
+    fireEvent.change(pwInputs[2], { target: { value: 'newPass456' } });
+    fireEvent.submit(forms[1]);
+    const { waitFor } = await import('@testing-library/react');
+    await waitFor(() => expect(screen.getByText('Failed to change password')).toBeInTheDocument());
+  });
 });
