@@ -246,4 +246,120 @@ describe('SearchPage', () => {
     await waitFor(() => expect(screen.getByText('Next')).toBeInTheDocument());
     expect(screen.getByText('Previous')).not.toBeDisabled();
   });
+
+  it('should render check-in and check-out date filter inputs', async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByLabelText('Check-in')).toBeInTheDocument());
+    expect(screen.getByLabelText('Check-out')).toBeInTheDocument();
+  });
+
+  it('should update checkIn date input value', async () => {
+    renderPage();
+    const checkInInput = await waitFor(() => screen.getByLabelText('Check-in'));
+    await act(async () => {
+      fireEvent.change(checkInInput, { target: { value: '2026-09-01' } });
+    });
+    expect((checkInInput as HTMLInputElement).value).toBe('2026-09-01');
+  });
+
+  it('should update checkOut date input value', async () => {
+    renderPage();
+    const checkOutInput = await waitFor(() => screen.getByLabelText('Check-out'));
+    await act(async () => {
+      fireEvent.change(checkOutInput, { target: { value: '2026-09-05' } });
+    });
+    expect((checkOutInput as HTMLInputElement).value).toBe('2026-09-05');
+  });
+
+  it('should render Exceptional review label for rating >= 9', async () => {
+    mockSearchResultData = {
+      data: [{ ...mockAcc, averageRating: 9.2, reviewCount: 50 }],
+      meta: { page: 1, pageSize: 20, totalCount: 1, totalPages: 1, hasNextPage: false, hasPreviousPage: false },
+    };
+    mockSearchFn.mockImplementation(() => Promise.resolve({ data: mockSearchResultData }));
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Exceptional')).toBeInTheDocument());
+  });
+
+  it('should render Fabulous review label for rating >= 8', async () => {
+    mockSearchResultData = {
+      data: [{ ...mockAcc, averageRating: 8.3, reviewCount: 20 }],
+      meta: { page: 1, pageSize: 20, totalCount: 1, totalPages: 1, hasNextPage: false, hasPreviousPage: false },
+    };
+    mockSearchFn.mockImplementation(() => Promise.resolve({ data: mockSearchResultData }));
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Fabulous')).toBeInTheDocument());
+  });
+
+  it('should render Very Good review label for rating >= 7', async () => {
+    mockSearchResultData = {
+      data: [{ ...mockAcc, averageRating: 7.1, reviewCount: 10 }],
+      meta: { page: 1, pageSize: 20, totalCount: 1, totalPages: 1, hasNextPage: false, hasPreviousPage: false },
+    };
+    mockSearchFn.mockImplementation(() => Promise.resolve({ data: mockSearchResultData }));
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Very Good')).toBeInTheDocument());
+  });
+
+  it('should render Good review label for rating >= 6', async () => {
+    mockSearchResultData = {
+      data: [{ ...mockAcc, averageRating: 6.5, reviewCount: 8 }],
+      meta: { page: 1, pageSize: 20, totalCount: 1, totalPages: 1, hasNextPage: false, hasPreviousPage: false },
+    };
+    mockSearchFn.mockImplementation(() => Promise.resolve({ data: mockSearchResultData }));
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Good')).toBeInTheDocument());
+  });
+
+  it('should render Pleasant review label for rating < 6', async () => {
+    mockSearchResultData = {
+      data: [{ ...mockAcc, averageRating: 5.0, reviewCount: 5 }],
+      meta: { page: 1, pageSize: 20, totalCount: 1, totalPages: 1, hasNextPage: false, hasPreviousPage: false },
+    };
+    mockSearchFn.mockImplementation(() => Promise.resolve({ data: mockSearchResultData }));
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Pleasant')).toBeInTheDocument());
+  });
+
+  it('should not show review label when reviewCount is 0', async () => {
+    mockSearchResultData = {
+      data: [{ ...mockAcc, averageRating: 0, reviewCount: 0 }],
+      meta: { page: 1, pageSize: 20, totalCount: 1, totalPages: 1, hasNextPage: false, hasPreviousPage: false },
+    };
+    mockSearchFn.mockImplementation(() => Promise.resolve({ data: mockSearchResultData }));
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Test Acc')).toBeInTheDocument());
+    expect(screen.queryByText('Exceptional')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pleasant')).not.toBeInTheDocument();
+  });
+
+  it('should add accommodation to wishlist on heart click', async () => {
+    localStorage.clear();
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Test Acc')).toBeInTheDocument());
+    const addBtn = screen.getByRole('button', { name: /Add to wishlist/i });
+    await act(async () => { fireEvent.click(addBtn); });
+    expect(localStorage.getItem('sa_wishlist')).toContain('1');
+  });
+
+  it('should remove accommodation from wishlist on second heart click', async () => {
+    localStorage.setItem('sa_wishlist', JSON.stringify(['1']));
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Test Acc')).toBeInTheDocument());
+    const removeBtn = screen.getByRole('button', { name: /Remove from wishlist/i });
+    await act(async () => { fireEvent.click(removeBtn); });
+    const stored = JSON.parse(localStorage.getItem('sa_wishlist') || '[]');
+    expect(stored).not.toContain('1');
+  });
+
+  it('should handle near-last-page boundary in pagination', async () => {
+    mockSearchResultData = {
+      data: [mockAcc],
+      meta: { page: 9, pageSize: 20, totalCount: 200, totalPages: 10, hasNextPage: true, hasPreviousPage: true },
+    };
+    mockSearchFn.mockImplementation(() => Promise.resolve({ data: mockSearchResultData }));
+    renderPage('/accommodations?page=9');
+    await waitFor(() => expect(screen.getByText('Next')).toBeInTheDocument());
+    expect(screen.getByText('Previous')).not.toBeDisabled();
+  });
 });

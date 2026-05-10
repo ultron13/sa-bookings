@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { FaHeart as FaHeartIcon, FaRegHeart as FaRegHeartIcon } from 'react-icons/fa';
+const FaHeart = FaHeartIcon as React.ElementType;
+const FaRegHeart = FaRegHeartIcon as React.ElementType;
 import api from '../services/api';
 import { Accommodation, PaginationMeta } from '../types';
 
@@ -12,11 +15,29 @@ const SORT_OPTIONS = [
   { value: 'createdAt_DESC', label: 'Newest First' },
 ];
 
+function getReviewLabel(rating: number, reviewCount: number): { label: string; color: string } | null {
+  if (!rating || reviewCount === 0) return null;
+  if (rating >= 9) return { label: 'Exceptional', color: 'bg-emerald-600' };
+  if (rating >= 8) return { label: 'Fabulous', color: 'bg-green-600' };
+  if (rating >= 7) return { label: 'Very Good', color: 'bg-teal-600' };
+  if (rating >= 6) return { label: 'Good', color: 'bg-blue-600' };
+  return { label: 'Pleasant', color: 'bg-sky-600' };
+}
+
+function loadWishlist(): string[] {
+  try { return JSON.parse(localStorage.getItem('sa_wishlist') || '[]'); } catch { return []; }
+}
+
+function saveWishlist(ids: string[]) {
+  localStorage.setItem('sa_wishlist', JSON.stringify(ids));
+}
+
 export const SearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [loading, setLoading] = useState(true);
+  const [wishlist, setWishlist] = useState<string[]>(loadWishlist);
 
   const province = searchParams.get('province') || '';
   const type = searchParams.get('type') || '';
@@ -25,6 +46,8 @@ export const SearchPage: React.FC = () => {
   const guests = searchParams.get('guests') || '';
   const sort = searchParams.get('sort') || 'createdAt_DESC';
   const page = parseInt(searchParams.get('page') || '1');
+  const checkIn = searchParams.get('checkIn') || '';
+  const checkOut = searchParams.get('checkOut') || '';
 
   useEffect(() => {
     setLoading(true);
@@ -56,6 +79,14 @@ export const SearchPage: React.FC = () => {
     setSearchParams(params);
   };
 
+  const toggleWishlist = (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const updated = wishlist.includes(id) ? wishlist.filter((x) => x !== id) : [...wishlist, id];
+    setWishlist(updated);
+    saveWishlist(updated);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col lg:flex-row gap-8">
@@ -77,7 +108,15 @@ export const SearchPage: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
+              <label htmlFor="filter-checkin" className="block text-sm font-medium text-gray-700 mb-2">Check-in</label>
+              <input id="filter-checkin" type="date" value={checkIn} onChange={(e) => updateFilter('checkIn', e.target.value)} className="input-field" min={new Date().toISOString().split('T')[0]} />
+            </div>
+            <div>
+              <label htmlFor="filter-checkout" className="block text-sm font-medium text-gray-700 mb-2">Check-out</label>
+              <input id="filter-checkout" type="date" value={checkOut} onChange={(e) => updateFilter('checkOut', e.target.value)} className="input-field" min={checkIn || new Date().toISOString().split('T')[0]} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Price Range (R)</label>
               <div className="flex gap-2">
                 <input type="number" placeholder="Min" value={minPrice} onChange={(e) => updateFilter('minPrice', e.target.value)} className="input-field" />
                 <input type="number" placeholder="Max" value={maxPrice} onChange={(e) => updateFilter('maxPrice', e.target.value)} className="input-field" />
@@ -117,37 +156,58 @@ export const SearchPage: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {accommodations.map((acc: Accommodation) => (
-                <Link key={acc.id} to={`/accommodations/${acc.id}`} className="card group">
-                  <div className="aspect-[4/3] bg-gradient-to-br from-gray-300 to-gray-400 relative flex items-center justify-center text-5xl text-gray-500">
-                    🏠
-                    <div className="absolute top-3 left-3">
-                      <span className="badge bg-sa-green text-white">{(acc.type || '').replace('_', ' ')}</span>
+              {accommodations.map((acc: Accommodation) => {
+                const reviewInfo = getReviewLabel(Number(acc.averageRating), acc.reviewCount);
+                const isWishlisted = wishlist.includes(acc.id);
+                return (
+                  <Link key={acc.id} to={`/accommodations/${acc.id}`} className="card group">
+                    <div className="aspect-[4/3] bg-gradient-to-br from-gray-300 to-gray-400 relative flex items-center justify-center text-5xl text-gray-500">
+                      🏠
+                      <div className="absolute top-3 left-3">
+                        <span className="badge bg-sa-green text-white">{(acc.type || '').replace('_', ' ')}</span>
+                      </div>
+                      <div className="absolute top-3 right-3 flex items-center gap-2">
+                        <span className="badge bg-white text-gray-900 shadow">★ {Number(acc.averageRating).toFixed(1)}</span>
+                        <button
+                          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+                          onClick={(e) => toggleWishlist(e, acc.id)}
+                          className="w-8 h-8 rounded-full bg-white shadow flex items-center justify-center hover:scale-110 transition-transform"
+                        >
+                          {isWishlisted
+                            ? <FaHeart className="text-red-500 text-sm" />
+                            : <FaRegHeart className="text-gray-400 text-sm" />}
+                        </button>
+                      </div>
                     </div>
-                    <div className="absolute top-3 right-3">
-                      <span className="badge bg-white text-gray-900 shadow">★ {Number(acc.averageRating).toFixed(1)}</span>
+                    <div className="p-4">
+                      <p className="text-xs text-gray-500 mb-1">{acc.city}, {acc.province}</p>
+                      <h3 className="font-semibold text-gray-900 group-hover:text-sa-green transition-colors truncate">{acc.name}</h3>
+                      <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
+                        <span>{acc.bedrooms} bed{acc.bedrooms > 1 ? 's' : ''}</span>
+                        <span>•</span>
+                        <span>{acc.bathrooms} bath{acc.bathrooms > 1 ? 's' : ''}</span>
+                        <span>•</span>
+                        <span>Up to {acc.maxGuests} guests</span>
+                      </div>
+                      {reviewInfo && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className={`text-xs font-semibold text-white px-2 py-0.5 rounded ${reviewInfo.color}`}>
+                            {reviewInfo.label}
+                          </span>
+                          <span className="text-xs text-gray-400">{acc.reviewCount} review{acc.reviewCount !== 1 ? 's' : ''}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1 mt-2">
+                        {(acc.amenities || []).slice(0, 4).map((a: string) => (
+                          <span key={a} className="badge bg-gray-100 text-gray-600 text-[10px]">{a.replace(/_/g, ' ')}</span>
+                        ))}
+                        {(acc.amenities || []).length > 4 && <span className="text-xs text-gray-400">+{(acc.amenities || []).length - 4}</span>}
+                      </div>
+                      <p className="mt-3 font-bold text-gray-900">R {Number(acc.pricePerNight).toLocaleString()} <span className="font-normal text-sm text-gray-500">/ night</span></p>
                     </div>
-                  </div>
-                  <div className="p-4">
-                    <p className="text-xs text-gray-500 mb-1">{acc.city}, {acc.province}</p>
-                    <h3 className="font-semibold text-gray-900 group-hover:text-sa-green transition-colors truncate">{acc.name}</h3>
-                    <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
-                      <span>{acc.bedrooms} bed{acc.bedrooms > 1 ? 's' : ''}</span>
-                      <span>•</span>
-                      <span>{acc.bathrooms} bath{acc.bathrooms > 1 ? 's' : ''}</span>
-                      <span>•</span>
-                      <span>Up to {acc.maxGuests} guests</span>
-                    </div>
-                    <div className="flex items-center gap-1 mt-3">
-                      {(acc.amenities || []).slice(0, 4).map((a: string) => (
-                        <span key={a} className="badge bg-gray-100 text-gray-600 text-[10px]">{a.replace(/_/g, ' ')}</span>
-                      ))}
-                      {(acc.amenities || []).length > 4 && <span className="text-xs text-gray-400">+{(acc.amenities || []).length - 4}</span>}
-                    </div>
-                    <p className="mt-3 font-bold text-gray-900">R {Number(acc.pricePerNight).toLocaleString()} <span className="font-normal text-sm text-gray-500">/ night</span></p>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           )}
 

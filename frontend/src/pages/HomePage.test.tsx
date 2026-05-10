@@ -138,4 +138,86 @@ describe('HomePage', () => {
     await screen.findByText('Safari Lodge');
     expect(screen.getByText('game lodge')).toBeInTheDocument();
   });
+
+  it('should render check-in and check-out date inputs', () => {
+    render(<MemoryRouter><HomePage /></MemoryRouter>);
+    expect(screen.getByLabelText('Check-in')).toBeInTheDocument();
+    expect(screen.getByLabelText('Check-out')).toBeInTheDocument();
+  });
+
+  it('should navigate with check-in and check-out dates', async () => {
+    render(<MemoryRouter><HomePage /></MemoryRouter>);
+    fireEvent.change(screen.getByLabelText('Check-in'), { target: { value: '2026-08-01' } });
+    fireEvent.change(screen.getByLabelText('Check-out'), { target: { value: '2026-08-05' } });
+
+    await act(async () => {
+      fireEvent.submit(screen.getByRole('button', { name: /search/i }).closest('form')!);
+    });
+    const navCall = mockNavigate.mock.calls[0][0];
+    expect(navCall).toContain('checkIn=2026-08-01');
+    expect(navCall).toContain('checkOut=2026-08-05');
+  });
+
+  it('should render trust signals section', () => {
+    render(<MemoryRouter><HomePage /></MemoryRouter>);
+    expect(screen.getByText('Free Cancellation')).toBeInTheDocument();
+    expect(screen.getByText('Verified Reviews')).toBeInTheDocument();
+    expect(screen.getByText('All 9 Provinces')).toBeInTheDocument();
+    expect(screen.getByText('24/7 Support')).toBeInTheDocument();
+  });
+
+  it('should render Browse by Property Type section', () => {
+    render(<MemoryRouter><HomePage /></MemoryRouter>);
+    expect(screen.getByText('Browse by Property Type')).toBeInTheDocument();
+    expect(screen.getByText('Hotels')).toBeInTheDocument();
+    expect(screen.getByText('Apartments')).toBeInTheDocument();
+    expect(screen.getByText('Game Lodges')).toBeInTheDocument();
+  });
+
+  it('should render review score label for Exceptional rating', async () => {
+    mockFeatured = [{
+      id: '2', name: 'Top Rated Lodge', city: 'Franschhoek', province: 'Western Cape',
+      type: 'lodge', averageRating: 9.2, reviewCount: 50, pricePerNight: 8000,
+    }];
+    render(<MemoryRouter><HomePage /></MemoryRouter>);
+    await screen.findByText('Top Rated Lodge');
+    expect(screen.getByText('Exceptional')).toBeInTheDocument();
+  });
+
+  it('should render review score label for Fabulous rating', async () => {
+    mockFeatured = [{
+      id: '3', name: 'Fabulous Villa', city: 'Hermanus', province: 'Western Cape',
+      type: 'villa', averageRating: 8.5, reviewCount: 30, pricePerNight: 6000,
+    }];
+    render(<MemoryRouter><HomePage /></MemoryRouter>);
+    await screen.findByText('Fabulous Villa');
+    expect(screen.getByText('Fabulous')).toBeInTheDocument();
+  });
+
+  it('should render review score label for Very Good rating', async () => {
+    mockFeatured = [{
+      id: '4', name: 'Good Place', city: 'Durban', province: 'KwaZulu-Natal',
+      type: 'hotel', averageRating: 7.3, reviewCount: 15, pricePerNight: 2000,
+    }];
+    render(<MemoryRouter><HomePage /></MemoryRouter>);
+    await screen.findByText('Good Place');
+    expect(screen.getByText('Very Good')).toBeInTheDocument();
+  });
+
+  it('should not show review label when reviewCount is 0', async () => {
+    mockFeatured = [{
+      id: '5', name: 'New Place', city: 'Pretoria', province: 'Gauteng',
+      type: 'guesthouse', averageRating: 0, reviewCount: 0, pricePerNight: 1000,
+    }];
+    render(<MemoryRouter><HomePage /></MemoryRouter>);
+    await screen.findByText('New Place');
+    expect(screen.queryByText('Exceptional')).not.toBeInTheDocument();
+    expect(screen.queryByText('Good')).not.toBeInTheDocument();
+  });
+
+  it('should link property type cards to correct search URL', () => {
+    render(<MemoryRouter><HomePage /></MemoryRouter>);
+    const hotelLink = screen.getByText('Hotels').closest('a');
+    expect(hotelLink).toHaveAttribute('href', '/accommodations?type=hotel');
+  });
 });
