@@ -73,6 +73,7 @@ export interface Accommodation {
   reviewCount: number;
   isAvailable: boolean;
   isFeatured: boolean;
+  hostId?: string;
   host?: User;
   cancellationPolicy?: {
     type: 'flexible' | 'moderate' | 'strict';

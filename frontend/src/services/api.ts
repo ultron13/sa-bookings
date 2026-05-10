@@ -135,6 +135,10 @@ class ApiService {
     return this.client.get('/bookings/host', { params: { page } });
   }
 
+  getAvailability(accommodationId: string, year: number, month: number) {
+    return this.client.get(`/bookings/availability/${accommodationId}`, { params: { year, month } });
+  }
+
   // Admin
   getAdminDashboard() {
     return this.client.get('/admin/dashboard');
@@ -176,6 +180,27 @@ class ApiService {
 
   respondToReview(id: string, response: string) {
     return this.client.put(`/reviews/${id}/respond`, { response });
+  }
+
+  // Messages
+  getConversations() {
+    return this.client.get('/messages/conversations');
+  }
+
+  getOrCreateConversation(hostId: string, accommodationId?: string) {
+    return this.client.post('/messages/conversations', { hostId, accommodationId });
+  }
+
+  getConversation(id: string) {
+    return this.client.get(`/messages/conversations/${id}`);
+  }
+
+  getMessages(conversationId: string, page: number = 1) {
+    return this.client.get(`/messages/conversations/${conversationId}/messages`, { params: { page } });
+  }
+
+  sendMessage(conversationId: string, content: string) {
+    return this.client.post(`/messages/conversations/${conversationId}/messages`, { content });
   }
 }
 

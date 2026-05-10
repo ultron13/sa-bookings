@@ -19,6 +19,8 @@ let mockGetAccommodationFn = jest.fn().mockResolvedValue({ data: { data: mockAcc
 let mockGetReviewsFn = jest.fn().mockResolvedValue({ data: { data: mockReviewsData } });
 let mockCreateBookingFn = jest.fn().mockResolvedValue({ data: { data: { id: 'new-booking-id' } } });
 let mockCreateReviewFn = jest.fn().mockResolvedValue({ data: { data: { id: 'r3', rating: 5, comment: 'Amazing!' } } });
+let mockGetAvailabilityFn = jest.fn().mockResolvedValue({ data: { data: [] } });
+let mockGetOrCreateConversationFn = jest.fn().mockResolvedValue({ data: { data: { id: 'conv1' } } });
 
 jest.mock('../services/api', () => ({
   __esModule: true,
@@ -27,13 +29,31 @@ jest.mock('../services/api', () => ({
     getAccommodationReviews: (...args: any[]) => mockGetReviewsFn(...args),
     createBooking: (...args: any[]) => mockCreateBookingFn(...args),
     createReview: (...args: any[]) => mockCreateReviewFn(...args),
+    getAvailability: (...args: any[]) => mockGetAvailabilityFn(...args),
+    getOrCreateConversation: (...args: any[]) => mockGetOrCreateConversationFn(...args),
   },
   api: {
     getAccommodation: (...args: any[]) => mockGetAccommodationFn(...args),
     getAccommodationReviews: (...args: any[]) => mockGetReviewsFn(...args),
     createBooking: (...args: any[]) => mockCreateBookingFn(...args),
     createReview: (...args: any[]) => mockCreateReviewFn(...args),
+    getAvailability: (...args: any[]) => mockGetAvailabilityFn(...args),
+    getOrCreateConversation: (...args: any[]) => mockGetOrCreateConversationFn(...args),
   },
+}));
+
+jest.mock('../contexts/CurrencyContext', () => ({
+  __esModule: true,
+  useCurrency: () => ({ currency: 'ZAR', setCurrency: jest.fn(), format: (n: number) => `R ${n.toLocaleString()}`, symbol: 'R' }),
+  CurrencyProvider: ({ children }: any) => <>{children}</>,
+}));
+
+jest.mock('../components/AvailabilityCalendar', () => ({
+  AvailabilityCalendar: () => <div data-testid="availability-calendar">Availability Calendar</div>,
+}));
+
+jest.mock('../components/PropertyMap', () => ({
+  PropertyMap: () => <div data-testid="property-map">Map</div>,
 }));
 
 let mockUserAuth: any = null;

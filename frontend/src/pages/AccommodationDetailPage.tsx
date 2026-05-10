@@ -1,13 +1,18 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useCurrency } from '../contexts/CurrencyContext';
+import { AvailabilityCalendar } from '../components/AvailabilityCalendar';
 import api from '../services/api';
 import { Accommodation, Review, UserRole } from '../types';
+
+const PropertyMap = lazy(() => import('../components/PropertyMap').then((m) => ({ default: m.PropertyMap })));
 
 export const AccommodationDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { format } = useCurrency();
   const [accommodation, setAccommodation] = useState<Accommodation | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,7 +20,7 @@ export const AccommodationDetailPage: React.FC = () => {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
   const [submitReviewLoading, setSubmitReviewLoading] = useState(false);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [messagingLoading, setMessagingLoading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -41,7 +46,6 @@ export const AccommodationDetailPage: React.FC = () => {
     e.preventDefault();
     if (!isAuthenticated) { navigate('/login'); return; }
     if (!accommodation) return;
-
     setBookingLoading(true);
     try {
       const { data } = await api.createBooking({
@@ -56,6 +60,22 @@ export const AccommodationDetailPage: React.FC = () => {
       alert(err.response?.data?.error || 'Booking failed');
     } finally {
       setBookingLoading(false);
+    }
+  };
+
+  const handleMessageHost = async () => {
+    if (!isAuthenticated) { navigate('/login'); return; }
+    if (!accommodation) return;
+    setMessagingLoading(true);
+    try {
+      const hostId = accommodation.hostId || accommodation.host?.id;
+      if (!hostId) { alert('Host information unavailable'); return; }
+      const { data } = await api.getOrCreateConversation(hostId, accommodation.id);
+      navigate(`/messages/${data.data.id}`);
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Could not start conversation');
+    } finally {
+      setMessagingLoading(false);
     }
   };
 
@@ -80,12 +100,16 @@ export const AccommodationDetailPage: React.FC = () => {
   const nights = calculateNights();
   const subtotal = Number(accommodation.pricePerNight) * nights;
   const total = subtotal + Number(accommodation.cleaningFee) + Number(accommodation.serviceFee);
+  const lat = parseFloat(String(accommodation.latitude));
+  const lng = parseFloat(String(accommodation.longitude));
+  const hasCoords = !isNaN(lat) && !isNaN(lng);
   const placeholders = Array.from({ length: 4 }, (_, i) => i);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
+          {/* Photo grid */}
           <div className="grid grid-cols-2 gap-2 rounded-xl overflow-hidden mb-8">
             {placeholders.map((i) => (
               <div key={i} className={`aspect-[16/10] bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-6xl text-gray-500 ${i === 0 ? 'row-span-2' : ''}`}>
@@ -94,6 +118,7 @@ export const AccommodationDetailPage: React.FC = () => {
             ))}
           </div>
 
+          {/* Title & meta */}
           <div className="flex items-start justify-between mb-6">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -112,14 +137,19 @@ export const AccommodationDetailPage: React.FC = () => {
                 <span>Up to {accommodation.maxGuests} guests</span>
               </div>
             </div>
-            <p className="text-2xl font-bold text-gray-900">R {Number(accommodation.pricePerNight).toLocaleString()} <span className="text-sm font-normal text-gray-500">/ night</span></p>
+            <p className="text-2xl font-bold text-gray-900 text-right">
+              {format(Number(accommodation.pricePerNight))}<br />
+              <span className="text-sm font-normal text-gray-500">/ night</span>
+            </p>
           </div>
 
+          {/* Description */}
           <div className="border-t pt-6 mb-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">About this place</h2>
             <p className="text-gray-600 leading-relaxed">{accommodation.description}</p>
           </div>
 
+          {/* Amenities */}
           <div className="border-t pt-6 mb-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Amenities</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -132,11 +162,30 @@ export const AccommodationDetailPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Availability Calendar */}
+          <div className="border-t pt-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Availability</h2>
+            <AvailabilityCalendar accommodationId={accommodation.id} />
+          </div>
+
+          {/* Map */}
+          {hasCoords && (
+            <div className="border-t pt-6 mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Location</h2>
+              <Suspense fallback={<div className="h-[300px] bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">Loading map...</div>}>
+                <PropertyMap lat={lat} lng={lng} name={accommodation.name} city={accommodation.city} />
+              </Suspense>
+              <p className="text-sm text-gray-500 mt-2">{accommodation.city}, {accommodation.province}</p>
+            </div>
+          )}
+
+          {/* Cancellation Policy */}
           <div className="border-t pt-6 mb-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Cancellation Policy</h2>
             <p className="text-gray-600">{accommodation.cancellationPolicy?.description}</p>
           </div>
 
+          {/* Reviews */}
           <div className="border-t pt-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Reviews ({reviews.length})</h2>
             {reviews.length === 0 ? (
@@ -187,9 +236,10 @@ export const AccommodationDetailPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Booking sidebar */}
         <div className="lg:col-span-1">
           <div className="sticky top-24 bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-            <p className="text-2xl font-bold text-gray-900 mb-1">R {Number(accommodation.pricePerNight).toLocaleString()} <span className="text-sm font-normal text-gray-500">/ night</span></p>
+            <p className="text-2xl font-bold text-gray-900 mb-1">{format(Number(accommodation.pricePerNight))} <span className="text-sm font-normal text-gray-500">/ night</span></p>
             <form onSubmit={handleBooking} className="mt-4 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -216,10 +266,10 @@ export const AccommodationDetailPage: React.FC = () => {
 
               {nights > 0 && (
                 <div className="border-t pt-4 space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-gray-600">R {Number(accommodation.pricePerNight).toLocaleString()} x {nights} nights</span><span>R {subtotal.toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-600">Cleaning fee</span><span>R {Number(accommodation.cleaningFee).toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-600">Service fee</span><span>R {Number(accommodation.serviceFee).toLocaleString()}</span></div>
-                  <div className="flex justify-between font-bold text-base border-t pt-2"><span>Total</span><span>R {total.toLocaleString()}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600">{format(Number(accommodation.pricePerNight))} x {nights} nights</span><span>{format(subtotal)}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600">Cleaning fee</span><span>{format(Number(accommodation.cleaningFee))}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600">Service fee</span><span>{format(Number(accommodation.serviceFee))}</span></div>
+                  <div className="flex justify-between font-bold text-base border-t pt-2"><span>Total</span><span>{format(total)}</span></div>
                 </div>
               )}
 
@@ -229,6 +279,20 @@ export const AccommodationDetailPage: React.FC = () => {
               </button>
               {!accommodation.isAvailable && <p className="text-red-500 text-xs text-center">This accommodation is currently unavailable</p>}
             </form>
+
+            {/* Message Host button */}
+            {isAuthenticated && user?.role === UserRole.TOURIST && (
+              <button
+                onClick={handleMessageHost}
+                disabled={messagingLoading}
+                className="btn-secondary w-full mt-3 flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                {messagingLoading ? 'Opening...' : 'Message Host'}
+              </button>
+            )}
           </div>
         </div>
       </div>

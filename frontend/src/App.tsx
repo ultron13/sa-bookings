@@ -14,6 +14,8 @@ import { HostListingsPage } from './pages/HostListingsPage';
 import { HostBookingsPage } from './pages/HostBookingsPage';
 import { ListingFormPage } from './pages/ListingFormPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
+import { MessagesPage } from './pages/MessagesPage';
+import { ConversationPage } from './pages/ConversationPage';
 import { UserRole } from './types';
 
 export const ProtectedRoute: React.FC<{ children: React.ReactNode; roles?: UserRole[] }> = ({ children, roles }) => {
@@ -41,6 +43,8 @@ export const AppRoutes: React.FC = () => {
         <Route path="/host/listings/:id/edit" element={<ProtectedRoute roles={[UserRole.HOST]}><ListingFormPage /></ProtectedRoute>} />
         <Route path="/host/bookings" element={<ProtectedRoute roles={[UserRole.HOST]}><HostBookingsPage /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute roles={[UserRole.ADMIN]}><AdminDashboardPage /></ProtectedRoute>} />
+        <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+        <Route path="/messages/:id" element={<ProtectedRoute><ConversationPage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

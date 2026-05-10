@@ -20,6 +20,12 @@ jest.mock('../../contexts/AuthContext', () => ({
   AuthProvider: ({ children }: any) => <>{children}</>,
 }));
 
+jest.mock('../../contexts/CurrencyContext', () => ({
+  __esModule: true,
+  useCurrency: () => ({ currency: 'ZAR', setCurrency: jest.fn(), format: (n: number) => `R ${n}`, symbol: 'R' }),
+  CurrencyProvider: ({ children }: any) => <>{children}</>,
+}));
+
 import { Header } from './Header';
 
 const touristUser = { id: '1', firstName: 'John', lastName: 'Doe', email: 'john@test.com', role: 'tourist', isActive: true, createdAt: '' };

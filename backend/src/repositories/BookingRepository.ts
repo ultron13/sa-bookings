@@ -100,6 +100,23 @@ export class BookingRepository {
     return this.findById(id);
   }
 
+  async getBookedDateRanges(accommodationId: string, year: number, month: number): Promise<{ checkIn: string; checkOut: string }[]> {
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month + 1, 0); // last day of next month to include cross-month bookings
+    const bookings = await this.repo.createQueryBuilder('booking')
+      .select(['booking.checkIn', 'booking.checkOut'])
+      .where('booking.accommodationId = :accommodationId', { accommodationId })
+      .andWhere('booking.status IN (:...statuses)', {
+        statuses: [BookingStatus.CONFIRMED, BookingStatus.PENDING],
+      })
+      .andWhere('booking.checkOut > :start AND booking.checkIn < :end', { start, end })
+      .getMany();
+    return bookings.map((b) => ({
+      checkIn: b.checkIn instanceof Date ? b.checkIn.toISOString().split('T')[0] : String(b.checkIn),
+      checkOut: b.checkOut instanceof Date ? b.checkOut.toISOString().split('T')[0] : String(b.checkOut),
+    }));
+  }
+
   async getRevenueStats(startDate: Date, endDate: Date): Promise<number> {
     const result = await this.repo.createQueryBuilder('booking')
       .select('COALESCE(SUM(booking.totalAmount), 0)', 'total')

@@ -148,6 +148,10 @@ export class BookingService {
     return this.bookingRepo.update(bookingId, { status: BookingStatus.COMPLETED });
   }
 
+  async getBookedDateRanges(accommodationId: string, year: number, month: number) {
+    return this.bookingRepo.getBookedDateRanges(accommodationId, year, month);
+  }
+
   private generateReference(): string {
     const prefix = 'SA';
     const timestamp = Date.now().toString(36).toUpperCase();

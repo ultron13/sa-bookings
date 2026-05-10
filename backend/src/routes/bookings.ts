@@ -9,6 +9,7 @@ const controller = new BookingController();
 
 router.get('/', authenticate, controller.getMyBookings.bind(controller));
 router.get('/host', authenticate, controller.getHostBookings.bind(controller));
+router.get('/availability/:accommodationId', controller.getAvailability.bind(controller));
 
 router.get('/:id', authenticate, controller.getById.bind(controller));
 router.get('/reference/:reference', authenticate, controller.getByReference.bind(controller));

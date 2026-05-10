@@ -15,6 +15,7 @@ import bookingRoutes from './routes/bookings';
 import paymentRoutes from './routes/payments';
 import reviewRoutes from './routes/reviews';
 import adminRoutes from './routes/admin';
+import messageRoutes from './routes/messages';
 
 const app = express();
 
@@ -54,6 +55,7 @@ app.use('/api/v1/bookings', bookingRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/messages', messageRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

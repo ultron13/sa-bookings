@@ -84,6 +84,18 @@ export class BookingController {
     }
   }
 
+  async getAvailability(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { accommodationId } = req.params;
+      const year = parseInt(req.query.year as string) || new Date().getFullYear();
+      const month = parseInt(req.query.month as string) || new Date().getMonth() + 1;
+      const bookedRanges = await bookingService.getBookedDateRanges(accommodationId, year, month);
+      res.json({ success: true, data: bookedRanges });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async cancel(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { reason } = req.body;
